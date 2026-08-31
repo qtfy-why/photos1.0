@@ -291,24 +291,31 @@ $('logoutBtn').onclick=async()=>{
 
 $('addPhotoBtn').onclick=()=>$('uploadModal').classList.add('show');
 
-$('confirmUpload').onclick=async()=>{
+$('confirmUpload').onclick=()=>{
   const file=$('imgFile').files[0];
   if(!file)return showToast('请选择图片');
-  const reader=new FileReader();
-  reader.onload=async e=>{
-    const res=await fetch('/api/upload',{
-      method:'POST',
-      headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({image:e.target.result,title:$('photoTitle').value,token})
-    });
-    const d=await res.json();
-    if(d.ok){
-      $('uploadModal').classList.remove('show');
-      $('imgFile').value='';$('photoTitle').value='';
-      showToast('上传成功');loadPhotos();
-    }else showToast('上传失败');
-  }
-  reader.readAsDataURL(file);
+  $('confirmUpload').disabled=true;
+  $('confirmUpload').textContent='上传中…';
+  compressImage(file,async dataUrl=>{
+    try{
+      const res=await fetch('/api/upload',{
+        method:'POST',
+        headers:{'Content-Type':'application/json'},
+        body:JSON.stringify({image:dataUrl,title:$('photoTitle').value,token})
+      });
+      const d=await res.json();
+      if(d.ok){
+        $('uploadModal').classList.remove('show');
+        $('imgFile').value='';$('photoTitle').value='';
+        showToast('上传成功');loadPhotos();
+      }else showToast('上传失败：'+(d.msg||'未知错误'));
+    }catch(err){
+      showToast('上传失败，请重试');
+    }finally{
+      $('confirmUpload').disabled=false;
+      $('confirmUpload').textContent='确认上传';
+    }
+  },2400,.82);
 }
 
 /* ===== 照片墙 ===== */
