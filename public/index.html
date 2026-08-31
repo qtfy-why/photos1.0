@@ -3,45 +3,98 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>我的摄影集</title>
+<title>Perfect Photos</title>
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
-body{font-family:"Microsoft Yahei",sans-serif;background:#161616;color:#fff}
-header{text-align:center;padding:44px 20px 20px}
-h1{font-size:2.4rem;letter-spacing:6px}
-.desc{color:#9a9a9a;margin-top:10px}
-.admin-bar{max-width:1400px;margin:18px auto;padding:0 20px;display:flex;gap:12px;flex-wrap:wrap;justify-content:center}
-.btn{padding:9px 20px;border:none;border-radius:8px;cursor:pointer;font-size:.95rem}
-.btn-login{background:#2563eb;color:#fff}
-.btn-logout{background:#dc2626;color:#fff}
-.btn-add{background:#16a34a;color:#fff}
-.modal{position:fixed;inset:0;background:rgba(0,0,0,.72);display:none;align-items:center;justify-content:center;z-index:200}
+:root{
+  --bg:#f3eee3;           /* 暖米白 */
+  --card:#fdfbf5;
+  --text:#2f2b25;
+  --muted:#8b8375;
+  --accent:#6c7a58;       /* 橄榄绿 */
+  --accent-dark:#59674a;
+  --accent-soft:#e8ecdf;
+  --danger:#a86a58;       /* 暖砖红 */
+  --border:#e6ddca;
+  --shadow:0 6px 24px rgba(74,60,38,.10);
+  --radius:12px;
+}
+html,body{min-height:100%}
+body{
+  font-family:"PingFang SC","Microsoft YaHei","Hiragino Sans GB",sans-serif;
+  color:var(--text);
+  background-color:var(--bg);
+  background-size:cover;
+  background-position:center;
+  background-attachment:fixed;
+  background-repeat:no-repeat;
+  transition:background-color .5s ease;
+}
+#bgOverlay{position:fixed;inset:0;z-index:0;background:rgba(248,244,235,0);pointer-events:none;transition:opacity .5s ease}
+header{position:relative;z-index:1;text-align:center;padding:54px 20px 22px}
+header h1{
+  font-family:"Songti SC","SimSun","STSong","Noto Serif SC",serif;
+  font-size:2.6rem;font-weight:600;letter-spacing:10px;color:var(--text);
+  text-shadow:0 1px 3px rgba(255,255,255,.5);
+}
+.desc{color:var(--muted);margin-top:12px;font-size:.92rem;letter-spacing:4px;text-shadow:0 1px 2px rgba(255,255,255,.4)}
+.admin-bar{max-width:1400px;margin:20px auto;padding:0 20px;display:flex;gap:12px;flex-wrap:wrap;justify-content:center;position:relative;z-index:1}
+.btn{padding:9px 22px;border:none;border-radius:999px;cursor:pointer;font-size:.88rem;letter-spacing:1px;transition:all .25s;box-shadow:0 2px 8px rgba(74,60,38,.08)}
+.btn:hover{transform:translateY(-1px);box-shadow:0 4px 14px rgba(74,60,38,.14)}
+.btn-login{background:var(--accent);color:#fff}
+.btn-login:hover{background:var(--accent-dark)}
+.btn-logout{background:var(--danger);color:#fff}
+.btn-add{background:var(--accent-dark);color:#fff}
+.btn-gear{background:var(--card);color:var(--text);border:1px solid var(--border)}
+.modal{position:fixed;inset:0;background:rgba(47,43,37,.42);backdrop-filter:blur(3px);display:none;align-items:center;justify-content:center;z-index:200}
 .modal.show{display:flex}
-.box{background:#262626;padding:28px;border-radius:12px;width:92%;max-width:380px}
-.box h3{text-align:center;margin-bottom:18px}
-.box input{width:100%;padding:10px;margin:8px 0;border-radius:6px;border:none}
-.row{display:flex;gap:10px;margin-top:16px}
+.box{background:var(--card);padding:30px;border-radius:var(--radius);width:92%;max-width:430px;box-shadow:var(--shadow);border:1px solid var(--border);max-height:88vh;overflow-y:auto}
+.box h3{text-align:center;margin-bottom:20px;font-family:"Songti SC","SimSun",serif;letter-spacing:4px;color:var(--text)}
+.box input[type=text],.box input[type=password],.box input[type=file]{width:100%;padding:11px 14px;margin:8px 0;border-radius:8px;border:1px solid var(--border);background:#fff;font-size:.95rem;color:var(--text)}
+.row{display:flex;gap:10px;margin-top:18px}
 .row .btn{flex:1}
-.gallery-container{max-width:1400px;margin:0 auto;padding:10px 20px 40px;columns:3 320px;gap:18px}
-.photo-card{break-inside:avoid;margin-bottom:18px;overflow:hidden;border-radius:10px;background:#242424;transition:transform .3s;cursor:pointer;position:relative}
-.photo-card:hover{transform:translateY(-5px)}
+.gallery-container{max-width:1400px;margin:0 auto;padding:10px 20px 46px;columns:3 320px;gap:20px;position:relative;z-index:1}
+.photo-card{break-inside:avoid;margin-bottom:20px;overflow:hidden;border-radius:var(--radius);background:var(--card);border:1px solid var(--border);box-shadow:var(--shadow);transition:transform .35s ease, box-shadow .35s ease;cursor:pointer;position:relative}
+.photo-card:hover{transform:translateY(-6px);box-shadow:0 14px 34px rgba(74,60,38,.16)}
 .photo-card img{width:100%;display:block}
-.photo-info{padding:12px 14px}
-.photo-title{font-size:1.05rem;margin-bottom:5px}
-.photo-time{font-size:.82rem;color:#8f8f8f}
-.del-btn{position:absolute;top:8px;right:8px;background:#e13838;border:none;color:#fff;width:30px;height:30px;border-radius:50%;display:none;cursor:pointer;font-weight:bold}
-.lightbox{position:fixed;inset:0;background:rgba(0,0,0,.92);display:none;align-items:center;justify-content:center;z-index:999}
+.photo-info{padding:14px 16px}
+.photo-title{font-size:1.02rem;margin-bottom:5px;color:var(--text)}
+.photo-time{font-size:.8rem;color:var(--muted);letter-spacing:1px}
+.del-btn{position:absolute;top:10px;right:10px;background:var(--danger);border:none;color:#fff;width:30px;height:30px;border-radius:50%;display:none;cursor:pointer;font-weight:bold;box-shadow:0 2px 6px rgba(0,0,0,.25)}
+.lightbox{position:fixed;inset:0;background:rgba(35,32,28,.94);display:none;align-items:center;justify-content:center;z-index:999}
 .lightbox.show{display:flex}
-.lightbox img{max-width:92%;max-height:84vh;border-radius:6px}
-.close-btn{position:absolute;top:16px;right:26px;font-size:38px;color:#fff;cursor:pointer}
-.empty{text-align:center;color:#777;padding:80px 20px}
-footer{text-align:center;padding:40px 20px;color:#5f5f5f;font-size:.85rem}
-#toast{position:fixed;top:20px;left:50%;transform:translateX(-50%);background:#2f2f2f;color:#fff;padding:10px 22px;border-radius:8px;z-index:9999;display:none}
+.lightbox img{max-width:92%;max-height:84vh;border-radius:8px;box-shadow:0 10px 40px rgba(0,0,0,.5)}
+.close-btn{position:absolute;top:14px;right:26px;font-size:36px;color:#fff;cursor:pointer}
+.empty{text-align:center;color:var(--muted);padding:90px 20px;letter-spacing:2px}
+footer{text-align:center;padding:44px 20px;color:var(--muted);font-size:.82rem;letter-spacing:2px;position:relative;z-index:1}
+#toast{position:fixed;top:22px;left:50%;transform:translateX(-50%);background:rgba(47,43,37,.92);color:#fff;padding:11px 26px;border-radius:999px;z-index:9999;display:none;font-size:.9rem;box-shadow:0 6px 20px rgba(0,0,0,.2)}
+/* ===== 背景设置面板 ===== */
+.settings-section{margin:16px 0}
+.settings-section h4{font-size:.83rem;color:var(--muted);letter-spacing:2px;margin-bottom:10px;font-weight:500}
+.bg-options{display:flex;gap:8px;flex-wrap:wrap}
+.bg-option{flex:1;min-width:80px;padding:8px 6px;border:1px solid var(--border);border-radius:8px;background:#fff;cursor:pointer;font-size:.82rem;text-align:center;color:var(--text);transition:all .2s}
+.bg-option:hover{border-color:var(--accent)}
+.bg-option.active{border-color:var(--accent);background:var(--accent-soft);color:var(--accent-dark);font-weight:600}
+.swatches{display:flex;gap:10px;flex-wrap:wrap;margin-top:12px}
+.swatch{width:34px;height:34px;border-radius:50%;cursor:pointer;border:2px solid #fff;box-shadow:0 1px 4px rgba(0,0,0,.25);transition:transform .2s}
+.swatch:hover{transform:scale(1.12)}
+.swatch.active{border-color:var(--accent)}
+.presets{display:flex;gap:12px;margin-top:10px}
+.preset-item{flex:1;cursor:pointer;border-radius:8px;overflow:hidden;border:2px solid transparent;transition:all .2s}
+.preset-item:hover{border-color:var(--accent-soft)}
+.preset-item.active{border-color:var(--accent)}
+.preset-item img{width:100%;height:64px;object-fit:cover;display:block}
+.preset-item span{display:block;text-align:center;font-size:.74rem;color:var(--muted);margin-top:4px}
+input[type=color]{width:100%;height:42px;border:none;border-radius:8px;cursor:pointer;background:none;padding:0}
+.overlay-slider{width:100%;margin-top:8px;accent-color:var(--accent)}
+.set-note{font-size:.74rem;color:var(--muted);margin-top:8px;line-height:1.6}
 </style>
 </head>
 <body>
-<header><h1>我的摄影集</h1><p class="desc">记录时光 · 定格美好</p></header>
+<div id="bgOverlay"></div>
+<header><h1>Perfect Photos</h1><p class="desc">记录时光 · 定格美好</p></header>
 <div class="admin-bar">
+  <button class="btn btn-gear" id="settingsBtn">背景设置</button>
   <button class="btn btn-login" id="loginBtn">管理员登录</button>
   <button class="btn btn-logout" id="logoutBtn" style="display:none">退出登录</button>
   <button class="btn btn-add" id="addPhotoBtn" style="display:none">上传图片</button>
@@ -71,6 +124,47 @@ footer{text-align:center;padding:40px 20px;color:#5f5f5f;font-size:.85rem}
   </div>
 </div>
 
+<div class="modal" id="settingsModal">
+  <div class="box">
+    <h3>背景设置</h3>
+    <div class="settings-section">
+      <h4>背景类型</h4>
+      <div class="bg-options">
+        <div class="bg-option" data-bgtype="preset">预设图片</div>
+        <div class="bg-option" data-bgtype="color">纯色背景</div>
+        <div class="bg-option" data-bgtype="custom">自定义图片</div>
+      </div>
+    </div>
+    <div class="settings-section" id="secPreset" style="display:none">
+      <h4>选择背景图片</h4>
+      <div class="presets">
+        <div class="preset-item" data-bgimg="bg/bg-tree.jpg"><img src="bg/bg-tree.jpg" alt="树影"><span>树影</span></div>
+        <div class="preset-item" data-bgimg="bg/bg-dusk.jpg"><img src="bg/bg-dusk.jpg" alt="暮色"><span>暮色</span></div>
+        <div class="preset-item" data-bgimg="bg/bg-minimal.jpg"><img src="bg/bg-minimal.jpg" alt="极简"><span>极简</span></div>
+      </div>
+    </div>
+    <div class="settings-section" id="secColor" style="display:none">
+      <h4>背景颜色</h4>
+      <input type="color" id="bgColorPicker" value="#f3eee3">
+      <div class="swatches" id="colorSwatches"></div>
+    </div>
+    <div class="settings-section" id="secCustom" style="display:none">
+      <h4>上传自定义背景</h4>
+      <input type="file" id="bgFileInput" accept="image/*">
+      <div class="set-note">支持 JPG / PNG，上传后自动压缩并保存在本浏览器中</div>
+    </div>
+    <div class="settings-section">
+      <h4>遮罩透明度（图片背景时）</h4>
+      <input type="range" class="overlay-slider" id="overlaySlider" min="0" max="85" value="30">
+      <div class="set-note" id="overlayVal">30%</div>
+    </div>
+    <div class="row">
+      <button class="btn btn-login" id="resetBgBtn">恢复默认</button>
+      <button class="btn" id="closeSettings">完成</button>
+    </div>
+  </div>
+</div>
+
 <div class="gallery-container" id="galleryWrap"></div>
 
 <div class="lightbox" id="lightbox">
@@ -87,6 +181,97 @@ let isAdmin=!!token;
 const $=id=>document.getElementById(id);
 function showToast(msg){const t=$('toast');t.textContent=msg;t.style.display='block';setTimeout(()=>t.style.display='none',2200)}
 
+/* ===== 背景自定义 ===== */
+const BG_KEY='perfectdays_bg';
+const SWATCHES=['#f3eee3','#efe6d3','#dde3df','#d9dfe8','#ead9c4','#b7c2a8','#c9b8a0'];
+const DEFAULT_BG={type:'color',color:'#f3eee3',img:'',overlay:30};
+let bgSettings;
+try{bgSettings=Object.assign({},DEFAULT_BG,JSON.parse(localStorage.getItem(BG_KEY)||'{}'))}catch(e){bgSettings=Object.assign({},DEFAULT_BG)}
+
+function applyBg(){
+  const body=document.body;
+  const overlay=$('bgOverlay');
+  body.style.backgroundColor='';
+  body.style.backgroundImage='';
+  overlay.style.opacity=0;
+  if(bgSettings.type==='color'){
+    body.style.backgroundColor=bgSettings.color||'#f3eee3';
+  }else if(bgSettings.type==='preset'||bgSettings.type==='custom'){
+    if(bgSettings.img){
+      body.style.backgroundColor=(bgSettings.color||'#f3eee3');
+      body.style.backgroundImage='url('+bgSettings.img+')';
+      overlay.style.opacity=(bgSettings.overlay||0)/100;
+    }
+  }
+  syncSettingsUI();
+}
+function saveBg(){localStorage.setItem(BG_KEY,JSON.stringify(bgSettings));applyBg()}
+
+function syncSettingsUI(){
+  document.querySelectorAll('.bg-option').forEach(o=>o.classList.toggle('active',o.dataset.bgtype===bgSettings.type));
+  $('secPreset').style.display=bgSettings.type==='preset'?'block':'none';
+  $('secColor').style.display=bgSettings.type==='color'?'block':'none';
+  $('secCustom').style.display=bgSettings.type==='custom'?'block':'none';
+  document.querySelectorAll('.preset-item').forEach(p=>p.classList.toggle('active',p.dataset.bgimg===bgSettings.img));
+  $('overlaySlider').value=bgSettings.overlay||0;
+  $('overlayVal').textContent=(bgSettings.overlay||0)+'%';
+  if(bgSettings.color)$('bgColorPicker').value=bgSettings.color;
+  document.querySelectorAll('.swatch').forEach(s=>s.classList.toggle('active',s.style.background===bgSettings.color));
+}
+
+function renderSwatches(){
+  const box=$('colorSwatches');box.innerHTML='';
+  SWATCHES.forEach(c=>{
+    const d=document.createElement('div');
+    d.className='swatch';d.style.background=c;
+    d.title=c;
+    d.onclick=()=>{bgSettings.type='color';bgSettings.color=c;saveBg();showToast('已应用背景色');};
+    box.appendChild(d);
+  });
+}
+
+function compressImage(file,cb,maxW=1920,quality=.82){
+  const img=new Image();
+  const url=URL.createObjectURL(file);
+  img.onload=()=>{
+    let w=img.width,h=img.height;
+    const scale=Math.min(1,maxW/w);
+    w=Math.round(w*scale);h=Math.round(h*scale);
+    const c=document.createElement('canvas');c.width=w;c.height=h;
+    c.getContext('2d').drawImage(img,0,0,w,h);
+    URL.revokeObjectURL(url);
+    cb(c.toDataURL('image/jpeg',quality));
+  };
+  img.onerror=()=>{URL.revokeObjectURL(url);showToast('图片读取失败')};
+  img.src=url;
+}
+
+$('settingsBtn').onclick=()=>{
+  if(!isAdmin){showToast('仅管理员可使用');return;}
+  syncSettingsUI();$('settingsModal').classList.add('show')
+};
+$('closeSettings').onclick=()=>$('settingsModal').classList.remove('show');
+$('settingsModal').onclick=e=>{if(e.target===$('settingsModal'))$('settingsModal').classList.remove('show')};
+$('resetBgBtn').onclick=()=>{bgSettings=Object.assign({},DEFAULT_BG);saveBg();showToast('已恢复默认背景')};
+
+document.querySelectorAll('.bg-option').forEach(o=>{
+  o.onclick=()=>{bgSettings.type=o.dataset.bgtype;saveBg();};
+});
+document.querySelectorAll('.preset-item').forEach(p=>{
+  p.onclick=()=>{bgSettings.type='preset';bgSettings.img=p.dataset.bgimg;saveBg();showToast('已应用背景图片');};
+});
+$('bgColorPicker').oninput=e=>{bgSettings.type='color';bgSettings.color=e.target.value;saveBg();};
+$('overlaySlider').oninput=e=>{bgSettings.overlay=+e.target.value;saveBg();$('overlayVal').textContent=bgSettings.overlay+'%';};
+$('bgFileInput').onchange=e=>{
+  const file=e.target.files[0];
+  if(!file)return;
+  compressImage(file,dataUrl=>{
+    bgSettings.type='custom';bgSettings.img=dataUrl;saveBg();
+    showToast('自定义背景已应用');
+  });
+};
+
+/* ===== 登录 / 登出 ===== */
 $('loginBtn').onclick=()=>$('loginModal').classList.add('show');
 $('closeLogin').onclick=()=>$('loginModal').classList.remove('show');
 $('closeUpload').onclick=()=>$('uploadModal').classList.remove('show');
@@ -126,6 +311,7 @@ $('confirmUpload').onclick=async()=>{
   reader.readAsDataURL(file);
 }
 
+/* ===== 照片墙 ===== */
 async function loadPhotos(){
   const res=await fetch('/api/photos');
   const list=await res.json();
@@ -153,12 +339,17 @@ function refreshUI(){
   $('loginBtn').style.display=isAdmin?'none':'block';
   $('logoutBtn').style.display=isAdmin?'block':'none';
   $('addPhotoBtn').style.display=isAdmin?'block':'none';
+  $('settingsBtn').style.display=isAdmin?'block':'none';
   document.querySelectorAll('.del-btn').forEach(b=>b.style.display=isAdmin?'block':'none');
 }
 document.querySelector('.close-btn').onclick=()=>$('lightbox').classList.remove('show');
 $('lightbox').onclick=e=>{if(e.target===$('lightbox'))$('lightbox').classList.remove('show')};
-refreshUI();loadPhotos();
+
+/* ===== 初始化 ===== */
+renderSwatches();
+applyBg();
+refreshUI();
+loadPhotos();
 </script>
 </body>
 </html>
-
