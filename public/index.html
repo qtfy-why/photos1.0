@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>我的摄影集</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:"Microsoft Yahei",sans-serif;background:#161616;color:#fff}
+header{text-align:center;padding:44px 20px 20px}
+h1{font-size:2.4rem;letter-spacing:6px}
+.desc{color:#9a9a9a;margin-top:10px}
+.admin-bar{max-width:1400px;margin:18px auto;padding:0 20px;display:flex;gap:12px;flex-wrap:wrap;justify-content:center}
+.btn{padding:9px 20px;border:none;border-radius:8px;cursor:pointer;font-size:.95rem}
+.btn-login{background:#2563eb;color:#fff}
+.btn-logout{background:#dc2626;color:#fff}
+.btn-add{background:#16a34a;color:#fff}
+.modal{position:fixed;inset:0;background:rgba(0,0,0,.72);display:none;align-items:center;justify-content:center;z-index:200}
+.modal.show{display:flex}
+.box{background:#262626;padding:28px;border-radius:12px;width:92%;max-width:380px}
+.box h3{text-align:center;margin-bottom:18px}
+.box input{width:100%;padding:10px;margin:8px 0;border-radius:6px;border:none}
+.row{display:flex;gap:10px;margin-top:16px}
+.row .btn{flex:1}
+.gallery-container{max-width:1400px;margin:0 auto;padding:10px 20px 40px;columns:3 320px;gap:18px}
+.photo-card{break-inside:avoid;margin-bottom:18px;overflow:hidden;border-radius:10px;background:#242424;transition:transform .3s;cursor:pointer;position:relative}
+.photo-card:hover{transform:translateY(-5px)}
+.photo-card img{width:100%;display:block}
+.photo-info{padding:12px 14px}
+.photo-title{font-size:1.05rem;margin-bottom:5px}
+.photo-time{font-size:.82rem;color:#8f8f8f}
+.del-btn{position:absolute;top:8px;right:8px;background:#e13838;border:none;color:#fff;width:30px;height:30px;border-radius:50%;display:none;cursor:pointer;font-weight:bold}
+.lightbox{position:fixed;inset:0;background:rgba(0,0,0,.92);display:none;align-items:center;justify-content:center;z-index:999}
+.lightbox.show{display:flex}
+.lightbox img{max-width:92%;max-height:84vh;border-radius:6px}
+.close-btn{position:absolute;top:16px;right:26px;font-size:38px;color:#fff;cursor:pointer}
+.empty{text-align:center;color:#777;padding:80px 20px}
+footer{text-align:center;padding:40px 20px;color:#5f5f5f;font-size:.85rem}
+#toast{position:fixed;top:20px;left:50%;transform:translateX(-50%);background:#2f2f2f;color:#fff;padding:10px 22px;border-radius:8px;z-index:9999;display:none}
+</style>
+</head>
+<body>
+<header><h1>我的摄影集</h1><p class="desc">记录时光 · 定格美好</p></header>
+<div class="admin-bar">
+  <button class="btn btn-login" id="loginBtn">管理员登录</button>
+  <button class="btn btn-logout" id="logoutBtn" style="display:none">退出登录</button>
+  <button class="btn btn-add" id="addPhotoBtn" style="display:none">上传图片</button>
+</div>
+
+<div class="modal" id="loginModal">
+  <div class="box">
+    <h3>管理员登录</h3>
+    <input type="text" id="username" placeholder="账号">
+    <input type="password" id="pwd" placeholder="密码">
+    <div class="row">
+      <button class="btn btn-login" id="confirmLogin">登录</button>
+      <button class="btn" id="closeLogin">取消</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal" id="uploadModal">
+  <div class="box">
+    <h3>上传照片</h3>
+    <input type="file" id="imgFile" accept="image/*">
+    <input type="text" id="photoTitle" placeholder="照片标题">
+    <div class="row">
+      <button class="btn btn-add" id="confirmUpload">上传</button>
+      <button class="btn" id="closeUpload">取消</button>
+    </div>
+  </div>
+</div>
+
+<div class="gallery-container" id="galleryWrap"></div>
+
+<div class="lightbox" id="lightbox">
+  <span class="close-btn">&times;</span>
+  <img id="light-img">
+</div>
+
+<footer><p>© 2026 我的摄影集 · All Rights Reserved</p></footer>
+<div id="toast"></div>
+
+<script>
+let token=localStorage.getItem('token');
+let isAdmin=!!token;
+const $=id=>document.getElementById(id);
+function showToast(msg){const t=$('toast');t.textContent=msg;t.style.display='block';setTimeout(()=>t.style.display='none',2200)}
+
+$('loginBtn').onclick=()=>$('loginModal').classList.add('show');
+$('closeLogin').onclick=()=>$('loginModal').classList.remove('show');
+$('closeUpload').onclick=()=>$('uploadModal').classList.remove('show');
+
+$('confirmLogin').onclick=async()=>{
+  const u=$('username').value.trim(),p=$('pwd').value.trim();
+  const res=await fetch('/api/login',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({username:u,password:p})});
+  const d=await res.json();
+  if(d.ok){localStorage.setItem('token',d.token);token=d.token;isAdmin=true;$('loginModal').classList.remove('show');refreshUI();loadPhotos();showToast('登录成功')}
+  else showToast('账号密码错误');
+}
+
+$('logoutBtn').onclick=async()=>{
+  await fetch('/api/logout',{method:'POST'});
+  localStorage.removeItem('token');token=null;isAdmin=false;refreshUI();loadPhotos();showToast('已退出')
+}
+
+$('addPhotoBtn').onclick=()=>$('uploadModal').classList.add('show');
+
+$('confirmUpload').onclick=async()=>{
+  const file=$('imgFile').files[0];
+  if(!file)return showToast('请选择图片');
+  const reader=new FileReader();
+  reader.onload=async e=>{
+    const res=await fetch('/api/upload',{
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({image:e.target.result,title:$('photoTitle').value,token})
+    });
+    const d=await res.json();
+    if(d.ok){
+      $('uploadModal').classList.remove('show');
+      $('imgFile').value='';$('photoTitle').value='';
+      showToast('上传成功');loadPhotos();
+    }else showToast('上传失败');
+  }
+  reader.readAsDataURL(file);
+}
+
+async function loadPhotos(){
+  const res=await fetch('/api/photos');
+  const list=await res.json();
+  const wrap=$('galleryWrap');wrap.innerHTML='';
+  if(!list.length){wrap.innerHTML='<div class="empty">暂无照片</div>';return;}
+  list.forEach(item=>wrap.appendChild(buildCard(item)));
+  refreshUI();
+}
+
+function buildCard(item){
+  const card=document.createElement('div');
+  card.className='photo-card';
+  card.innerHTML=`<button class="del-btn">×</button><img src="${item.url}" alt="${item.title}"><div class="photo-info"><div class="photo-title">${item.title}</div><div class="photo-time">${item.time}</div></div>`;
+  card.querySelector('img').onclick=()=>{$('light-img').src=item.url;$('lightbox').classList.add('show')};
+  card.querySelector('.del-btn').onclick=async(e)=>{
+    e.stopPropagation();
+    if(!confirm('确定删除？'))return;
+    await fetch('/api/delete',{method:'DELETE',headers:{'Content-Type':'application/json'},body:JSON.stringify({id:item.id,token})});
+    showToast('已删除');loadPhotos();
+  }
+  return card;
+}
+
+function refreshUI(){
+  $('loginBtn').style.display=isAdmin?'none':'block';
+  $('logoutBtn').style.display=isAdmin?'block':'none';
+  $('addPhotoBtn').style.display=isAdmin?'block':'none';
+  document.querySelectorAll('.del-btn').forEach(b=>b.style.display=isAdmin?'block':'none');
+}
+document.querySelector('.close-btn').onclick=()=>$('lightbox').classList.remove('show');
+$('lightbox').onclick=e=>{if(e.target===$('lightbox'))$('lightbox').classList.remove('show')};
+refreshUI();loadPhotos();
+</script>
+</body>
+</html>
+
