@@ -8,7 +8,6 @@ cloudinary.config({
   api_secret:process.env.CLOUDINARY_API_SECRET
 });
 
-export const config={api:{bodyParser:{sizeLimit:'10mb'}}};
 
 export default async function handler(req,res){
   if(req.method!=='POST') return res.status(405).end();
