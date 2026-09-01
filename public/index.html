@@ -529,6 +529,12 @@ $('confirmUpload').onclick=()=>{
 }
 
 /* ===== 照片墙 ===== */
+function thumbUrl(url,w){
+  const sep='/image/upload/';
+  const i=url.indexOf(sep);
+  if(i<0)return url;
+  return url.slice(0,i)+sep+'w_'+w+',q_auto,f_auto/'+url.slice(i+sep.length);
+}
 async function loadPhotos(){
   let url='/api/photos';
   if(currentAlbum!=='all')url+='?album='+currentAlbum;
@@ -549,7 +555,7 @@ function buildCard(item){
   card.className='photo-card';
   const album=item.album_id?albums.find(a=>a.id===item.album_id):null;
   const tagHtml=album?'<span class="album-tag">'+escapeHtml(album.name)+'</span>':'';
-  card.innerHTML=`<button class="del-btn">×</button><button class="move-btn">移入相册</button><img src="${item.url}" alt="${escapeHtml(item.title)}"><div class="photo-info"><div class="photo-title">${escapeHtml(item.title)}${tagHtml}</div><div class="photo-time">${item.time}</div></div>`;
+  card.innerHTML=`<button class="del-btn">×</button><button class="move-btn">移入相册</button><img src="${thumbUrl(item.url,600)}" alt="${escapeHtml(item.title)}" loading="lazy"><div class="photo-info"><div class="photo-title">${escapeHtml(item.title)}${tagHtml}</div><div class="photo-time">${item.time}</div></div>`;
   card.querySelector('img').onclick=()=>{$('light-img').src=item.url;$('lightbox').classList.add('show')};
   card.querySelector('.del-btn').onclick=async(e)=>{
     e.stopPropagation();
