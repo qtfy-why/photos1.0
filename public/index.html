@@ -31,14 +31,15 @@ body{
   transition:background-color .5s ease;
 }
 #bgOverlay{position:fixed;inset:0;z-index:0;background:rgba(248,244,235,0);pointer-events:none;transition:opacity .5s ease}
-header{position:relative;z-index:1;text-align:center;padding:54px 20px 22px}
+header{position:relative;z-index:1;text-align:center;padding:54px 20px 18px}
 header h1{
   font-family:"Songti SC","SimSun","STSong","Noto Serif SC",serif;
   font-size:2.6rem;font-weight:600;letter-spacing:10px;color:var(--text);
   text-shadow:0 1px 3px rgba(255,255,255,.5);
 }
 .desc{color:var(--muted);margin-top:12px;font-size:.92rem;letter-spacing:4px;text-shadow:0 1px 2px rgba(255,255,255,.4)}
-.admin-bar{max-width:1400px;margin:20px auto;padding:0 20px;display:flex;gap:12px;flex-wrap:wrap;justify-content:center;position:relative;z-index:1}
+.desc-sub{color:var(--muted);margin-top:7px;font-size:.84rem;letter-spacing:5px;text-shadow:0 1px 2px rgba(255,255,255,.4)}
+.admin-bar{max-width:1400px;margin:20px auto 6px;padding:0 20px;display:flex;gap:12px;flex-wrap:wrap;justify-content:center;position:relative;z-index:1}
 .btn{padding:9px 22px;border:none;border-radius:999px;cursor:pointer;font-size:.88rem;letter-spacing:1px;transition:all .25s;box-shadow:0 2px 8px rgba(74,60,38,.08)}
 .btn:hover{transform:translateY(-1px);box-shadow:0 4px 14px rgba(74,60,38,.14)}
 .btn-login{background:var(--accent);color:#fff}
@@ -46,21 +47,43 @@ header h1{
 .btn-logout{background:var(--danger);color:#fff}
 .btn-add{background:var(--accent-dark);color:#fff}
 .btn-gear{background:var(--card);color:var(--text);border:1px solid var(--border)}
+/* ===== 相册导航栏 ===== */
+.album-bar{max-width:1400px;margin:4px auto 8px;padding:0 20px;display:flex;gap:10px;flex-wrap:wrap;align-items:center;justify-content:center;position:relative;z-index:1}
+.album-tab{padding:7px 16px;border:1px solid var(--border);border-radius:999px;background:var(--card);color:var(--text);cursor:pointer;font-size:.85rem;letter-spacing:1px;transition:all .25s;box-shadow:0 2px 6px rgba(74,60,38,.06)}
+.album-tab:hover{border-color:var(--accent)}
+.album-tab.active{background:var(--accent);color:#fff;border-color:var(--accent)}
+.album-tab .cnt{opacity:.72;font-size:.73rem;margin-left:3px}
+.btn-mgr{background:var(--card);color:var(--text);border:1px solid var(--border);padding:7px 16px;font-size:.85rem}
 .modal{position:fixed;inset:0;background:rgba(47,43,37,.42);backdrop-filter:blur(3px);display:none;align-items:center;justify-content:center;z-index:200}
 .modal.show{display:flex}
 .box{background:var(--card);padding:30px;border-radius:var(--radius);width:92%;max-width:430px;box-shadow:var(--shadow);border:1px solid var(--border);max-height:88vh;overflow-y:auto}
 .box h3{text-align:center;margin-bottom:20px;font-family:"Songti SC","SimSun",serif;letter-spacing:4px;color:var(--text)}
-.box input[type=text],.box input[type=password],.box input[type=file]{width:100%;padding:11px 14px;margin:8px 0;border-radius:8px;border:1px solid var(--border);background:#fff;font-size:.95rem;color:var(--text)}
+.box input[type=text],.box input[type=password],.box input[type=file],.box select{width:100%;padding:11px 14px;margin:8px 0;border-radius:8px;border:1px solid var(--border);background:#fff;font-size:.95rem;color:var(--text)}
 .row{display:flex;gap:10px;margin-top:18px}
 .row .btn{flex:1}
+/* ===== 相册管理 ===== */
+.album-list{margin:4px 0 6px}
+.album-row{display:flex;align-items:center;gap:8px;padding:9px 4px;border-bottom:1px solid var(--border);flex-wrap:wrap}
+.album-row .nm{flex:1;font-size:.92rem;color:var(--text);letter-spacing:1px;min-width:80px;cursor:pointer}
+.album-row .cnt{font-size:.74rem;color:var(--muted)}
+.mini-btn{padding:4px 11px;border:1px solid var(--border);border-radius:6px;background:#fff;cursor:pointer;font-size:.75rem;color:var(--text);letter-spacing:1px}
+.mini-btn:hover:not(:disabled){border-color:var(--accent);color:var(--accent-dark)}
+.mini-btn:disabled{opacity:.35;cursor:not-allowed}
+.mini-btn.danger{color:var(--danger);border-color:#e0c8bf}
+.album-row input{flex:1;min-width:70px;padding:6px 10px;border:1px solid var(--border);border-radius:6px;font-size:.9rem}
+.new-album-row{display:flex;gap:8px;margin:14px 0 4px}
+.new-album-row input{flex:1}
+.album-hint{font-size:.74rem;color:var(--muted);margin-top:6px;line-height:1.6}
 .gallery-container{max-width:1400px;margin:0 auto;padding:10px 20px 46px;columns:3 320px;gap:20px;position:relative;z-index:1}
 .photo-card{break-inside:avoid;margin-bottom:20px;overflow:hidden;border-radius:var(--radius);background:var(--card);border:1px solid var(--border);box-shadow:var(--shadow);transition:transform .35s ease, box-shadow .35s ease;cursor:pointer;position:relative}
 .photo-card:hover{transform:translateY(-6px);box-shadow:0 14px 34px rgba(74,60,38,.16)}
 .photo-card img{width:100%;display:block}
 .photo-info{padding:14px 16px}
-.photo-title{font-size:1.02rem;margin-bottom:5px;color:var(--text)}
+.photo-title{font-size:1.02rem;margin-bottom:5px;color:var(--text);word-break:break-all}
 .photo-time{font-size:.8rem;color:var(--muted);letter-spacing:1px}
+.album-tag{display:inline-block;font-size:.72rem;color:var(--accent-dark);background:var(--accent-soft);padding:2px 9px;border-radius:999px;margin-left:8px;vertical-align:middle}
 .del-btn{position:absolute;top:10px;right:10px;background:var(--danger);border:none;color:#fff;width:30px;height:30px;border-radius:50%;display:none;cursor:pointer;font-weight:bold;box-shadow:0 2px 6px rgba(0,0,0,.25)}
+.move-btn{position:absolute;top:10px;left:10px;background:var(--accent-dark);border:none;color:#fff;padding:6px 12px;border-radius:999px;display:none;cursor:pointer;font-size:.74rem;letter-spacing:1px;box-shadow:0 2px 6px rgba(0,0,0,.25)}
 .lightbox{position:fixed;inset:0;background:rgba(35,32,28,.94);display:none;align-items:center;justify-content:center;z-index:999}
 .lightbox.show{display:flex}
 .lightbox img{max-width:92%;max-height:84vh;border-radius:8px;box-shadow:0 10px 40px rgba(0,0,0,.5)}
@@ -92,12 +115,23 @@ input[type=color]{width:100%;height:42px;border:none;border-radius:8px;cursor:po
 </head>
 <body>
 <div id="bgOverlay"></div>
-<header><h1>Perfect Photos</h1><p class="desc">记录时光 · 定格美好</p></header>
+<header>
+  <h1>Perfect Photos</h1>
+  <p class="desc">Per aspera ad astra</p>
+  <p class="desc-sub">循此之旅，以达繁星</p>
+</header>
 <div class="admin-bar">
   <button class="btn btn-gear" id="settingsBtn">背景设置</button>
   <button class="btn btn-login" id="loginBtn">管理员登录</button>
   <button class="btn btn-logout" id="logoutBtn" style="display:none">退出登录</button>
   <button class="btn btn-add" id="addPhotoBtn" style="display:none">上传图片</button>
+</div>
+
+<div class="album-bar" id="albumBar">
+  <button class="album-tab" data-album="all">全部照片</button>
+  <button class="album-tab" data-album="none">未分类</button>
+  <div id="albumTabs"></div>
+  <button class="btn btn-gear btn-mgr" id="manageAlbumsBtn" style="display:none">相册管理</button>
 </div>
 
 <div class="modal" id="loginModal">
@@ -117,9 +151,40 @@ input[type=color]{width:100%;height:42px;border:none;border-radius:8px;cursor:po
     <h3>上传照片</h3>
     <input type="file" id="imgFile" accept="image/*">
     <input type="text" id="photoTitle" placeholder="照片标题">
+    <select id="uploadAlbum">
+      <option value="">未分类</option>
+    </select>
     <div class="row">
       <button class="btn btn-add" id="confirmUpload">上传</button>
       <button class="btn" id="closeUpload">取消</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal" id="albumModal">
+  <div class="box">
+    <h3>相册管理</h3>
+    <div class="album-list" id="albumList"></div>
+    <div class="new-album-row">
+      <input type="text" id="newAlbumName" placeholder="新相册名称">
+      <button class="btn btn-add" id="createAlbumBtn" style="flex:0 0 auto">创建</button>
+    </div>
+    <div class="album-hint">点击相册名可改名；删除相册后其中照片变为「未分类」，照片不会删除。</div>
+    <div class="row">
+      <button class="btn" id="closeAlbumMgr">完成</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal" id="moveModal">
+  <div class="box">
+    <h3>移动到相册</h3>
+    <select id="moveAlbumSelect">
+      <option value="">未分类</option>
+    </select>
+    <div class="row">
+      <button class="btn btn-add" id="confirmMove">移动</button>
+      <button class="btn" id="closeMove">取消</button>
     </div>
   </div>
 </div>
@@ -172,7 +237,7 @@ input[type=color]{width:100%;height:42px;border:none;border-radius:8px;cursor:po
   <img id="light-img">
 </div>
 
-<footer><p>© 2026 我的摄影集 · All Rights Reserved</p></footer>
+<footer><p>© 2026 Perfect Photos · All Rights Reserved</p></footer>
 <div id="toast"></div>
 
 <script>
@@ -180,6 +245,7 @@ let token=localStorage.getItem('token');
 let isAdmin=!!token;
 const $=id=>document.getElementById(id);
 function showToast(msg){const t=$('toast');t.textContent=msg;t.style.display='block';setTimeout(()=>t.style.display='none',2200)}
+function escapeHtml(s){return String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
 
 /* ===== 背景自定义 ===== */
 const BG_KEY='perfectdays_bg';
@@ -271,6 +337,150 @@ $('bgFileInput').onchange=e=>{
   });
 };
 
+/* ===== 相册 ===== */
+let albums=[];
+let currentAlbum='all';
+let movePhotoId=null;
+
+async function loadAlbums(){
+  try{
+    const res=await fetch('/api/albums');
+    albums=await res.json();
+  }catch(e){albums=[]}
+  renderAlbumTabs();
+  fillUploadAlbumSelect();
+  fillMoveAlbumSelect();
+}
+
+function renderAlbumTabs(){
+  const box=$('albumTabs');box.innerHTML='';
+  albums.forEach(a=>{
+    const b=document.createElement('button');
+    b.className='album-tab';
+    b.dataset.album=String(a.id);
+    b.innerHTML=escapeHtml(a.name)+'<span class="cnt">'+a.photo_count+'</span>';
+    b.onclick=()=>{currentAlbum=String(a.id);loadPhotos();syncAlbumTabs();};
+    box.appendChild(b);
+  });
+  syncAlbumTabs();
+}
+
+function syncAlbumTabs(){
+  document.querySelectorAll('#albumBar .album-tab').forEach(t=>t.classList.toggle('active',t.dataset.album===currentAlbum));
+}
+
+document.querySelectorAll('#albumBar [data-album]').forEach(t=>{
+  t.onclick=()=>{currentAlbum=t.dataset.album;loadPhotos();syncAlbumTabs();};
+});
+
+function fillUploadAlbumSelect(){
+  const sel=$('uploadAlbum');
+  const cur=sel.value;
+  sel.innerHTML='<option value="">未分类</option>'+albums.map(a=>'<option value="'+a.id+'">'+escapeHtml(a.name)+'</option>').join('');
+  if(cur)sel.value=cur;
+}
+
+function fillMoveAlbumSelect(){
+  const sel=$('moveAlbumSelect');
+  sel.innerHTML='<option value="">未分类</option>'+albums.map(a=>'<option value="'+a.id+'">'+escapeHtml(a.name)+'</option>').join('');
+}
+
+/* 相册管理 */
+$('manageAlbumsBtn').onclick=()=>{renderAlbumMgrList();$('albumModal').classList.add('show')};
+$('closeAlbumMgr').onclick=()=>$('albumModal').classList.remove('show');
+$('albumModal').onclick=e=>{if(e.target===$('albumModal'))$('albumModal').classList.remove('show')};
+
+$('createAlbumBtn').onclick=async()=>{
+  const name=$('newAlbumName').value.trim();
+  if(!name)return showToast('请输入相册名称');
+  const res=await fetch('/api/albums',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({name,token})});
+  const d=await res.json();
+  if(d.ok){$('newAlbumName').value='';showToast('相册已创建');await loadAlbums();renderAlbumMgrList();}
+  else showToast(d.msg||'创建失败');
+};
+$('newAlbumName').onkeydown=e=>{if(e.key==='Enter')$('createAlbumBtn').click()};
+
+function renderAlbumMgrList(){
+  const box=$('albumList');box.innerHTML='';
+  if(!albums.length){
+    box.innerHTML='<div class="empty" style="padding:24px">还没有相册，先创建一个吧</div>';
+    return;
+  }
+  albums.forEach((a,i)=>{
+    const row=document.createElement('div');
+    row.className='album-row';
+    const nm=document.createElement('div');
+    nm.className='nm';
+    nm.innerHTML='<span>'+escapeHtml(a.name)+'</span>';
+    nm.appendChild(Object.assign(document.createElement('span'),{className:'cnt',textContent:a.photo_count+' 张'}));
+    nm.onclick=()=>enterRename(row,nm,a);
+    row.appendChild(nm);
+    const up=document.createElement('button');up.className='mini-btn';up.textContent='上移';up.disabled=i===0;
+    up.onclick=async()=>reorderAlbums(i,i-1);
+    const down=document.createElement('button');down.className='mini-btn';down.textContent='下移';down.disabled=i===albums.length-1;
+    down.onclick=async()=>reorderAlbums(i,i+1);
+    const ren=document.createElement('button');ren.className='mini-btn';ren.textContent='改名';
+    ren.onclick=()=>enterRename(row,nm,a);
+    const del=document.createElement('button');del.className='mini-btn danger';del.textContent='删除';
+    del.onclick=async()=>{
+      if(!confirm('删除相册「'+a.name+'」？相册内照片将变为未分类（照片不会删除）。'))return;
+      const res=await fetch('/api/albums',{method:'DELETE',headers:{'Content-Type':'application/json'},body:JSON.stringify({id:a.id,token})});
+      if(res.ok){
+        showToast('相册已删除');
+        if(currentAlbum===String(a.id))currentAlbum='all';
+        await loadAlbums();renderAlbumMgrList();await loadPhotos();
+      }else showToast('删除失败');
+    };
+    row.append(up,down,ren,del);
+    box.appendChild(row);
+  });
+}
+
+function enterRename(row,nm,a){
+  nm.innerHTML='<input type="text" value="'+escapeHtml(a.name)+'">';
+  const inp=nm.querySelector('input');
+  inp.focus();inp.select();
+  let done=false;
+  const commit=async()=>{
+    if(done)return;done=true;
+    const name=inp.value.trim();
+    if(!name){nm.innerHTML='<span>'+escapeHtml(a.name)+'</span>';return;}
+    const res=await fetch('/api/albums',{method:'PATCH',headers:{'Content-Type':'application/json'},body:JSON.stringify({id:a.id,name,token})});
+    if(res.ok){showToast('已重命名');await loadAlbums();renderAlbumMgrList();}
+    else showToast('重命名失败');
+  };
+  inp.onkeydown=e=>{
+    if(e.key==='Enter'){e.preventDefault();commit();}
+    if(e.key==='Escape'){nm.innerHTML='<span>'+escapeHtml(a.name)+'</span>';}
+  };
+  inp.onblur=commit;
+}
+
+async function reorderAlbums(from,to){
+  if(to<0||to>=albums.length)return;
+  const arr=albums.slice();
+  const [m]=arr.splice(from,1);
+  arr.splice(to,0,m);
+  const res=await fetch('/api/albums',{method:'PATCH',headers:{'Content-Type':'application/json'},body:JSON.stringify({ids:arr.map(x=>x.id),token})});
+  if(res.ok){
+    albums=arr;
+    renderAlbumMgrList();renderAlbumTabs();
+  }else showToast('排序失败');
+}
+
+/* 移动照片 */
+$('closeMove').onclick=()=>$('moveModal').classList.remove('show');
+$('moveModal').onclick=e=>{if(e.target===$('moveModal'))$('moveModal').classList.remove('show')};
+$('confirmMove').onclick=async()=>{
+  if(!movePhotoId)return;
+  const albumId=$('moveAlbumSelect').value||null;
+  const res=await fetch('/api/move',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({id:movePhotoId,album_id:albumId,token})});
+  if(res.ok){
+    $('moveModal').classList.remove('show');
+    showToast('已移动');loadPhotos();loadAlbums();
+  }else showToast('移动失败');
+};
+
 /* ===== 登录 / 登出 ===== */
 $('loginBtn').onclick=()=>$('loginModal').classList.add('show');
 $('closeLogin').onclick=()=>$('loginModal').classList.remove('show');
@@ -289,7 +499,7 @@ $('logoutBtn').onclick=async()=>{
   localStorage.removeItem('token');token=null;isAdmin=false;refreshUI();loadPhotos();showToast('已退出')
 }
 
-$('addPhotoBtn').onclick=()=>$('uploadModal').classList.add('show');
+$('addPhotoBtn').onclick=()=>{$('uploadAlbum').value=currentAlbum!=='all'&&currentAlbum!=='none'?currentAlbum:'';$('uploadModal').classList.add('show')};
 
 $('confirmUpload').onclick=()=>{
   const file=$('imgFile').files[0];
@@ -301,13 +511,13 @@ $('confirmUpload').onclick=()=>{
       const res=await fetch('/api/upload',{
         method:'POST',
         headers:{'Content-Type':'application/json'},
-        body:JSON.stringify({image:dataUrl,title:$('photoTitle').value,token})
+        body:JSON.stringify({image:dataUrl,title:$('photoTitle').value,album_id:$('uploadAlbum').value||null,token})
       });
       const d=await res.json();
       if(d.ok){
         $('uploadModal').classList.remove('show');
         $('imgFile').value='';$('photoTitle').value='';
-        showToast('上传成功');loadPhotos();
+        showToast('上传成功');loadPhotos();loadAlbums();
       }else showToast('上传失败：'+(d.msg||'未知错误'));
     }catch(err){
       showToast('上传失败，请重试');
@@ -320,25 +530,39 @@ $('confirmUpload').onclick=()=>{
 
 /* ===== 照片墙 ===== */
 async function loadPhotos(){
-  const res=await fetch('/api/photos');
-  const list=await res.json();
-  const wrap=$('galleryWrap');wrap.innerHTML='';
-  if(!list.length){wrap.innerHTML='<div class="empty">暂无照片</div>';return;}
-  list.forEach(item=>wrap.appendChild(buildCard(item)));
+  let url='/api/photos';
+  if(currentAlbum!=='all')url+='?album='+currentAlbum;
+  try{
+    const res=await fetch(url);
+    const list=await res.json();
+    const wrap=$('galleryWrap');wrap.innerHTML='';
+    if(!list.length){wrap.innerHTML='<div class="empty">暂无照片</div>';return;}
+    list.forEach(item=>wrap.appendChild(buildCard(item)));
+  }catch(e){
+    $('galleryWrap').innerHTML='<div class="empty">加载失败</div>';
+  }
   refreshUI();
 }
 
 function buildCard(item){
   const card=document.createElement('div');
   card.className='photo-card';
-  card.innerHTML=`<button class="del-btn">×</button><img src="${item.url}" alt="${item.title}"><div class="photo-info"><div class="photo-title">${item.title}</div><div class="photo-time">${item.time}</div></div>`;
+  const album=item.album_id?albums.find(a=>a.id===item.album_id):null;
+  const tagHtml=album?'<span class="album-tag">'+escapeHtml(album.name)+'</span>':'';
+  card.innerHTML=`<button class="del-btn">×</button><button class="move-btn">移入相册</button><img src="${item.url}" alt="${escapeHtml(item.title)}"><div class="photo-info"><div class="photo-title">${escapeHtml(item.title)}${tagHtml}</div><div class="photo-time">${item.time}</div></div>`;
   card.querySelector('img').onclick=()=>{$('light-img').src=item.url;$('lightbox').classList.add('show')};
   card.querySelector('.del-btn').onclick=async(e)=>{
     e.stopPropagation();
     if(!confirm('确定删除？'))return;
     await fetch('/api/delete',{method:'DELETE',headers:{'Content-Type':'application/json'},body:JSON.stringify({id:item.id,token})});
-    showToast('已删除');loadPhotos();
+    showToast('已删除');loadPhotos();loadAlbums();
   }
+  card.querySelector('.move-btn').onclick=e=>{
+    e.stopPropagation();
+    movePhotoId=item.id;
+    fillMoveAlbumSelect();
+    $('moveModal').classList.add('show');
+  };
   return card;
 }
 
@@ -347,7 +571,9 @@ function refreshUI(){
   $('logoutBtn').style.display=isAdmin?'block':'none';
   $('addPhotoBtn').style.display=isAdmin?'block':'none';
   $('settingsBtn').style.display=isAdmin?'block':'none';
+  $('manageAlbumsBtn').style.display=isAdmin?'block':'none';
   document.querySelectorAll('.del-btn').forEach(b=>b.style.display=isAdmin?'block':'none');
+  document.querySelectorAll('.move-btn').forEach(b=>b.style.display=isAdmin?'block':'none');
 }
 document.querySelector('.close-btn').onclick=()=>$('lightbox').classList.remove('show');
 $('lightbox').onclick=e=>{if(e.target===$('lightbox'))$('lightbox').classList.remove('show')};
@@ -356,6 +582,7 @@ $('lightbox').onclick=e=>{if(e.target===$('lightbox'))$('lightbox').classList.re
 renderSwatches();
 applyBg();
 refreshUI();
+loadAlbums();
 loadPhotos();
 </script>
 </body>

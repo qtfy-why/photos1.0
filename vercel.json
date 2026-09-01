@@ -32,6 +32,14 @@
       "dest": "/api/delete.js"
     },
     {
+      "src": "/api/albums",
+      "dest": "/api/albums.js"
+    },
+    {
+      "src": "/api/move",
+      "dest": "/api/move.js"
+    },
+    {
       "src": "/",
       "dest": "/public/index.html"
     }
