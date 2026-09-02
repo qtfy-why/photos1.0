@@ -103,6 +103,23 @@ header h1{
 .move-btn{position:absolute;top:10px;left:10px;background:var(--accent-dark);border:none;color:#fff;padding:6px 12px;border-radius:999px;display:none;cursor:pointer;font-size:.74rem;letter-spacing:1px;box-shadow:0 2px 6px rgba(0,0,0,.25)}
 .shot-edit-btn{display:none;border:none;background:none;color:var(--accent-dark);cursor:pointer;font-size:.8rem;margin-left:6px;padding:0 4px;vertical-align:middle}
 .shot-edit-btn:hover{color:var(--accent)}
+/* ===== 照片排序面板 ===== */
+.sort-list{max-height:52vh;overflow-y:auto;margin:6px 0 4px}
+.sort-item{display:flex;align-items:center;gap:10px;padding:8px 10px;border:1px solid var(--border);border-radius:8px;background:#fff;margin-bottom:8px}
+.sort-item img{width:52px;height:52px;object-fit:cover;border-radius:6px;flex:0 0 auto}
+.sort-item .nm{flex:1;min-width:0;font-size:.9rem;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.sort-item .t{font-size:.72rem;color:var(--muted)}
+.grip{font-size:1.25rem;color:var(--muted);cursor:grab;flex:0 0 auto;user-select:none}
+.sort-item.dragging{opacity:.5;border-style:dashed}
+.sort-mv{flex:0 0 auto;display:flex;gap:4px}
+.mini-btn{border:1px solid var(--border);background:#fff;color:var(--accent-dark);padding:4px 10px;border-radius:6px;cursor:pointer;font-size:.76rem}
+.mini-btn:hover{background:var(--accent-light)}
+/* ===== 灯箱 ===== */
+.lb-arrow{position:absolute;top:50%;transform:translateY(-50%);background:rgba(0,0,0,.35);border:none;color:#fff;font-size:32px;width:54px;height:74px;cursor:pointer;border-radius:10px;line-height:1;z-index:2;transition:background .2s}
+.lb-arrow:hover{background:rgba(0,0,0,.6)}
+.lb-prev{left:14px}
+.lb-next{right:14px}
+.lb-count{position:absolute;bottom:20px;left:50%;transform:translateX(-50%);color:#fff;font-size:.85rem;background:rgba(0,0,0,.45);padding:6px 18px;border-radius:999px;letter-spacing:2px;z-index:2}
 .lightbox{position:fixed;inset:0;background:rgba(35,32,28,.94);display:none;align-items:center;justify-content:center;z-index:999}
 .lightbox.show{display:flex}
 .lightbox img{max-width:92%;max-height:84vh;border-radius:8px;box-shadow:0 10px 40px rgba(0,0,0,.5)}
@@ -144,6 +161,7 @@ input[type=color]{width:100%;height:42px;border:none;border-radius:8px;cursor:po
   <button class="btn btn-login" id="loginBtn">管理员登录</button>
   <button class="btn btn-logout" id="logoutBtn" style="display:none">退出登录</button>
   <button class="btn btn-add" id="addPhotoBtn" style="display:none">上传图片</button>
+  <button class="btn btn-gear" id="sortPhotosBtn" style="display:none">排序照片</button>
 </div>
 
 <div class="album-bar" id="albumBar">
@@ -221,6 +239,18 @@ input[type=color]{width:100%;height:42px;border:none;border-radius:8px;cursor:po
   </div>
 </div>
 
+<div class="modal" id="sortModal">
+  <div class="box">
+    <h3>排序照片</h3>
+    <div class="set-note">按住 ≡ 拖动调整顺序，或用上/下按钮；点「保存排序」生效。</div>
+    <div class="sort-list" id="sortList"></div>
+    <div class="row">
+      <button class="btn btn-add" id="saveSort">保存排序</button>
+      <button class="btn" id="closeSort">取消</button>
+    </div>
+  </div>
+</div>
+
 <div class="modal" id="settingsModal">
   <div class="box">
     <h3>背景设置</h3>
@@ -266,7 +296,10 @@ input[type=color]{width:100%;height:42px;border:none;border-radius:8px;cursor:po
 
 <div class="lightbox" id="lightbox">
   <span class="close-btn">&times;</span>
+  <button class="lb-arrow lb-prev" id="lbPrev">‹</button>
   <img id="light-img">
+  <button class="lb-arrow lb-next" id="lbNext">›</button>
+  <div class="lb-count" id="lightIndex"></div>
 </div>
 
 <footer><p>© 2026 Perfect Photos · All Rights Reserved</p></footer>
@@ -374,6 +407,8 @@ let albums=[];
 let currentAlbum='all';
 let movePhotoId=null;
 let currentShotId=null;
+let currentList=[];
+let lightIndex=0;
 
 async function loadAlbums(){
   try{
@@ -586,6 +621,7 @@ async function loadPhotos(){
   try{
     const res=await fetch(url);
     const list=await res.json();
+    currentList=list;
     const wrap=$('galleryWrap');wrap.innerHTML='';
     if(!list.length){wrap.innerHTML='<div class="empty">暂无照片</div>';return;}
     list.forEach(item=>wrap.appendChild(buildCard(item)));
@@ -602,7 +638,11 @@ function buildCard(item){
   const tagHtml=album?'<span class="album-tag">'+escapeHtml(album.name)+'</span>':'';
   const timeText=item.shot_time?('拍摄于 '+item.shot_time):item.time;
   card.innerHTML=`<button class="del-btn">×</button><button class="move-btn">移入相册</button><img src="${thumbUrl(item.url,600)}" alt="${escapeHtml(item.title)}" loading="lazy"><div class="photo-info"><div class="photo-title">${escapeHtml(item.title)}${tagHtml}</div><div class="photo-time">${escapeHtml(timeText)}<button class="shot-edit-btn" title="修改拍摄时间">✎</button></div></div>`;
-  card.querySelector('img').onclick=()=>{$('light-img').src=item.url;$('lightbox').classList.add('show')};
+  card.querySelector('img').onclick=()=>{
+    lightIndex=currentList.findIndex(p=>p.id===item.id);
+    if(lightIndex<0)lightIndex=0;
+    openLightbox();
+  };
   card.querySelector('.del-btn').onclick=async(e)=>{
     e.stopPropagation();
     if(!confirm('确定删除？'))return;
@@ -646,12 +686,96 @@ $('clearShot').onclick=()=>{saveShotTime(null);$('shotModal').classList.remove('
 $('closeShot').onclick=()=>$('shotModal').classList.remove('show');
 $('shotModal').onclick=e=>{if(e.target===$('shotModal'))$('shotModal').classList.remove('show')};
 
+/* ===== 排序照片 ===== */
+$('sortPhotosBtn').onclick=()=>{renderSortList();$('sortModal').classList.add('show')};
+$('closeSort').onclick=()=>$('sortModal').classList.remove('show');
+$('sortModal').onclick=e=>{if(e.target===$('sortModal'))$('sortModal').classList.remove('show')};
+
+function renderSortList(){
+  const box=$('sortList');box.innerHTML='';
+  if(!currentList.length){box.innerHTML='<div class="empty" style="padding:20px">当前没有照片</div>';return;}
+  currentList.forEach(item=>{
+    const row=document.createElement('div');
+    row.className='sort-item';row.draggable=true;row.dataset.id=item.id;
+    const img=document.createElement('img');img.src=thumbUrl(item.url,120);img.loading='lazy';img.alt='';
+    const nm=document.createElement('div');nm.className='nm';
+    const n1=document.createElement('div');n1.textContent=item.title||'无标题';
+    const n2=document.createElement('div');n2.className='t';n2.textContent=item.shot_time||item.time||'';
+    nm.append(n1,n2);
+    const grip=document.createElement('span');grip.className='grip';grip.textContent='≡';grip.title='拖动排序';
+    const mv=document.createElement('div');mv.className='sort-mv';
+    const up=document.createElement('button');up.type='button';up.className='mini-btn';up.textContent='上移';up.onclick=()=>moveSortItem(row,-1);
+    const down=document.createElement('button');down.type='button';down.className='mini-btn';down.textContent='下移';down.onclick=()=>moveSortItem(row,1);
+    mv.append(up,down);
+    row.append(grip,img,nm,mv);
+    box.appendChild(row);
+  });
+  initSortable(box);
+}
+function moveSortItem(row,dir){
+  const box=$('sortList');
+  if(dir<0){const prev=row.previousElementSibling;if(prev)box.insertBefore(row,prev);}
+  else{const next=row.nextElementSibling;if(next)box.appendChild(row);}
+}
+function initSortable(container){
+  let dragEl=null;
+  container.querySelectorAll('.sort-item').forEach(it=>{
+    it.addEventListener('dragstart',e=>{dragEl=it;e.dataTransfer.effectAllowed='move';it.classList.add('dragging')});
+    it.addEventListener('dragend',()=>{if(dragEl)dragEl.classList.remove('dragging');dragEl=null});
+  });
+  container.addEventListener('dragover',e=>{
+    e.preventDefault();
+    if(!dragEl)return;
+    const after=getDragAfter(container,e.clientY);
+    if(after==null)container.appendChild(dragEl);
+    else container.insertBefore(dragEl,after);
+  });
+  container.addEventListener('drop',e=>e.preventDefault());
+}
+function getDragAfter(container,y){
+  const els=[...container.querySelectorAll('.sort-item:not(.dragging)')];
+  let closest={offset:-Infinity,el:null};
+  els.forEach(el=>{
+    const box=el.getBoundingClientRect();
+    const offset=y-box.top-box.height/2;
+    if(offset<0&&offset>closest.offset)closest={offset,el};
+  });
+  return closest.el;
+}
+$('saveSort').onclick=async()=>{
+  const ids=[...$('sortList').querySelectorAll('.sort-item')].map(r=>Number(r.dataset.id));
+  if(!ids.length)return;
+  const res=await fetch('/api/photo-sort',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({ids,token})});
+  if(res.ok){$('sortModal').classList.remove('show');showToast('排序已保存');await loadPhotos();}
+  else showToast('保存失败');
+};
+
+/* ===== 灯箱切换 ===== */
+function openLightbox(){
+  const item=currentList[lightIndex];
+  if(!item)return;
+  $('light-img').src=item.url;
+  $('lightIndex').textContent=(lightIndex+1)+' / '+currentList.length;
+  $('lightbox').classList.add('show');
+}
+function nextPhoto(){if(lightIndex<currentList.length-1){lightIndex++;openLightbox();}}
+function prevPhoto(){if(lightIndex>0){lightIndex--;openLightbox();}}
+$('lbNext').onclick=e=>{e.stopPropagation();nextPhoto()};
+$('lbPrev').onclick=e=>{e.stopPropagation();prevPhoto()};
+document.addEventListener('keydown',e=>{
+  if(!$('lightbox').classList.contains('show'))return;
+  if(e.key==='ArrowRight')nextPhoto();
+  else if(e.key==='ArrowLeft')prevPhoto();
+  else if(e.key==='Escape')$('lightbox').classList.remove('show');
+});
+
 function refreshUI(){
   $('loginBtn').style.display=isAdmin?'none':'block';
   $('logoutBtn').style.display=isAdmin?'block':'none';
   $('addPhotoBtn').style.display=isAdmin?'block':'none';
   $('settingsBtn').style.display=isAdmin?'block':'none';
   $('manageAlbumsBtn').style.display=isAdmin?'block':'none';
+  $('sortPhotosBtn').style.display=isAdmin?'block':'none';
   document.querySelectorAll('.del-btn').forEach(b=>b.style.display=isAdmin?'block':'none');
   document.querySelectorAll('.move-btn').forEach(b=>b.style.display=isAdmin?'block':'none');
   document.querySelectorAll('.shot-edit-btn').forEach(b=>b.style.display=isAdmin?'inline':'none');

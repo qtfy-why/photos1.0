@@ -5,7 +5,7 @@ export default async function handler(req,res){
   if(req.method==='GET'){
     try{
       const album=req.query.album;
-      let sql='SELECT id,title,url,time,shot_time,album_id FROM photos';
+      let sql='SELECT id,title,url,time,shot_time,album_id,sort_order FROM photos';
       const params=[];
       if(album==='none'){
         sql+=' WHERE album_id IS NULL';
@@ -13,7 +13,7 @@ export default async function handler(req,res){
         if(isNaN(Number(album))) return res.status(400).json({ok:false,msg:'参数错误'});
         sql+=' WHERE album_id=$1';params.push(Number(album));
       }
-      sql+=' ORDER BY id DESC';
+      sql+=' ORDER BY sort_order ASC, id DESC';
       const result=await pool.query(sql,params);
       return res.json(result.rows);
     }catch(e){
