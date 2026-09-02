@@ -166,8 +166,8 @@ input[type=color]{width:100%;height:42px;border:none;border-radius:8px;cursor:po
 <div class="modal" id="uploadModal">
   <div class="box">
     <h3>上传照片</h3>
-    <input type="file" id="imgFile" accept="image/*">
-    <input type="text" id="photoTitle" placeholder="照片标题">
+    <input type="file" id="imgFile" accept="image/*" multiple>
+    <input type="text" id="photoTitle" placeholder="照片标题（多张时自动用文件名）">
     <select id="uploadAlbum">
       <option value="">未分类</option>
     </select>
@@ -518,31 +518,43 @@ $('logoutBtn').onclick=async()=>{
 
 $('addPhotoBtn').onclick=()=>{$('uploadAlbum').value=currentAlbum!=='all'&&currentAlbum!=='none'?currentAlbum:'';$('uploadModal').classList.add('show')};
 
-$('confirmUpload').onclick=()=>{
-  const file=$('imgFile').files[0];
-  if(!file)return showToast('请选择图片');
-  $('confirmUpload').disabled=true;
-  $('confirmUpload').textContent='上传中…';
-  compressImage(file,async dataUrl=>{
-    try{
-      const res=await fetch('/api/upload',{
-        method:'POST',
-        headers:{'Content-Type':'application/json'},
-        body:JSON.stringify({image:dataUrl,title:$('photoTitle').value,album_id:$('uploadAlbum').value||null,token})
-      });
-      const d=await res.json();
-      if(d.ok){
-        $('uploadModal').classList.remove('show');
-        $('imgFile').value='';$('photoTitle').value='';
-        showToast('上传成功');loadPhotos();loadAlbums();
-      }else showToast('上传失败：'+(d.msg||'未知错误'));
-    }catch(err){
-      showToast('上传失败，请重试');
-    }finally{
-      $('confirmUpload').disabled=false;
-      $('confirmUpload').textContent='确认上传';
-    }
-  },2400,.82);
+function fileBaseName(name){return String(name||'').replace(/\.[^.]+$/,'')}
+
+$('confirmUpload').onclick=async()=>{
+  const files=$('imgFile').files;
+  if(!files||!files.length)return showToast('请选择图片');
+  const btn=$('confirmUpload');
+  const typedTitle=$('photoTitle').value.trim();
+  const albumId=$('uploadAlbum').value||null;
+  const total=files.length;
+  btn.disabled=true;
+  let ok=0,fail=0;
+  for(let i=0;i<total;i++){
+    btn.textContent='上传中 '+(i+1)+'/'+total+'…';
+    const title=total===1?typedTitle:(fileBaseName(files[i].name)||('照片'+(i+1)));
+    await new Promise(done=>{
+      compressImage(files[i],async dataUrl=>{
+        try{
+          const res=await fetch('/api/upload',{
+            method:'POST',
+            headers:{'Content-Type':'application/json'},
+            body:JSON.stringify({image:dataUrl,title,album_id:albumId,token})
+          });
+          const d=await res.json();
+          if(d.ok)ok++;else fail++;
+        }catch(err){fail++;}
+        done();
+      },2400,.82);
+    });
+  }
+  btn.disabled=false;
+  btn.textContent='确认上传';
+  $('imgFile').value='';
+  $('photoTitle').value='';
+  if(ok>0){
+    showToast('成功上传 '+ok+' 张'+(fail?('，失败 '+fail+' 张'):''));
+    loadPhotos();loadAlbums();
+  }else showToast('上传失败，请重试');
 }
 
 /* ===== 照片墙 ===== */
@@ -572,7 +584,8 @@ function buildCard(item){
   card.className='photo-card';
   const album=item.album_id?albums.find(a=>a.id===item.album_id):null;
   const tagHtml=album?'<span class="album-tag">'+escapeHtml(album.name)+'</span>':'';
-  card.innerHTML=`<button class="del-btn">×</button><button class="move-btn">移入相册</button><img src="${thumbUrl(item.url,600)}" alt="${escapeHtml(item.title)}" loading="lazy"><div class="photo-info"><div class="photo-title">${escapeHtml(item.title)}${tagHtml}</div><div class="photo-time">${item.time}</div></div>`;
+  const timeText=item.shot_time?('拍摄于 '+item.shot_time):item.time;
+  card.innerHTML=`<button class="del-btn">×</button><button class="move-btn">移入相册</button><img src="${thumbUrl(item.url,600)}" alt="${escapeHtml(item.title)}" loading="lazy"><div class="photo-info"><div class="photo-title">${escapeHtml(item.title)}${tagHtml}</div><div class="photo-time">${escapeHtml(timeText)}</div></div>`;
   card.querySelector('img').onclick=()=>{$('light-img').src=item.url;$('lightbox').classList.add('show')};
   card.querySelector('.del-btn').onclick=async(e)=>{
     e.stopPropagation();

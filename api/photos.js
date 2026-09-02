@@ -5,7 +5,7 @@ export default async function handler(req,res){
   if(req.method==='GET'){
     try{
       const album=req.query.album;
-      let sql='SELECT id,title,url,time,album_id FROM photos';
+      let sql='SELECT id,title,url,time,shot_time,album_id FROM photos';
       const params=[];
       if(album==='none'){
         sql+=' WHERE album_id IS NULL';
