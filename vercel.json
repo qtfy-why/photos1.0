@@ -40,6 +40,10 @@
       "dest": "/api/move.js"
     },
     {
+      "src": "/api/update",
+      "dest": "/api/update.js"
+    },
+    {
       "src": "/",
       "dest": "/public/index.html"
     }

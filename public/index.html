@@ -101,6 +101,8 @@ header h1{
 .album-tag{display:inline-block;font-size:.72rem;color:var(--accent-dark);background:var(--accent-soft);padding:2px 9px;border-radius:999px;margin-left:8px;vertical-align:middle}
 .del-btn{position:absolute;top:10px;right:10px;background:var(--danger);border:none;color:#fff;width:30px;height:30px;border-radius:50%;display:none;cursor:pointer;font-weight:bold;box-shadow:0 2px 6px rgba(0,0,0,.25)}
 .move-btn{position:absolute;top:10px;left:10px;background:var(--accent-dark);border:none;color:#fff;padding:6px 12px;border-radius:999px;display:none;cursor:pointer;font-size:.74rem;letter-spacing:1px;box-shadow:0 2px 6px rgba(0,0,0,.25)}
+.shot-edit-btn{display:none;border:none;background:none;color:var(--accent-dark);cursor:pointer;font-size:.8rem;margin-left:6px;padding:0 4px;vertical-align:middle}
+.shot-edit-btn:hover{color:var(--accent)}
 .lightbox{position:fixed;inset:0;background:rgba(35,32,28,.94);display:none;align-items:center;justify-content:center;z-index:999}
 .lightbox.show{display:flex}
 .lightbox img{max-width:92%;max-height:84vh;border-radius:8px;box-shadow:0 10px 40px rgba(0,0,0,.5)}
@@ -202,6 +204,19 @@ input[type=color]{width:100%;height:42px;border:none;border-radius:8px;cursor:po
     <div class="row">
       <button class="btn btn-add" id="confirmMove">移动</button>
       <button class="btn" id="closeMove">取消</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal" id="shotModal">
+  <div class="box">
+    <h3>修改拍摄时间</h3>
+    <input type="date" id="shotDateInput">
+    <div class="set-note">照片无法自动识别拍摄时间时，可在这里手动填写或清除。</div>
+    <div class="row">
+      <button class="btn btn-add" id="confirmShot">保存</button>
+      <button class="btn btn-logout" id="clearShot">清除时间</button>
+      <button class="btn" id="closeShot">取消</button>
     </div>
   </div>
 </div>
@@ -358,6 +373,7 @@ $('bgFileInput').onchange=e=>{
 let albums=[];
 let currentAlbum='all';
 let movePhotoId=null;
+let currentShotId=null;
 
 async function loadAlbums(){
   try{
@@ -585,7 +601,7 @@ function buildCard(item){
   const album=item.album_id?albums.find(a=>a.id===item.album_id):null;
   const tagHtml=album?'<span class="album-tag">'+escapeHtml(album.name)+'</span>':'';
   const timeText=item.shot_time?('拍摄于 '+item.shot_time):item.time;
-  card.innerHTML=`<button class="del-btn">×</button><button class="move-btn">移入相册</button><img src="${thumbUrl(item.url,600)}" alt="${escapeHtml(item.title)}" loading="lazy"><div class="photo-info"><div class="photo-title">${escapeHtml(item.title)}${tagHtml}</div><div class="photo-time">${escapeHtml(timeText)}</div></div>`;
+  card.innerHTML=`<button class="del-btn">×</button><button class="move-btn">移入相册</button><img src="${thumbUrl(item.url,600)}" alt="${escapeHtml(item.title)}" loading="lazy"><div class="photo-info"><div class="photo-title">${escapeHtml(item.title)}${tagHtml}</div><div class="photo-time">${escapeHtml(timeText)}<button class="shot-edit-btn" title="修改拍摄时间">✎</button></div></div>`;
   card.querySelector('img').onclick=()=>{$('light-img').src=item.url;$('lightbox').classList.add('show')};
   card.querySelector('.del-btn').onclick=async(e)=>{
     e.stopPropagation();
@@ -599,8 +615,36 @@ function buildCard(item){
     fillMoveAlbumSelect();
     $('moveModal').classList.add('show');
   };
+  card.querySelector('.shot-edit-btn').onclick=e=>{
+    e.stopPropagation();
+    currentShotId=item.id;
+    $('shotDateInput').value=toDateInput(item.shot_time);
+    $('shotModal').classList.add('show');
+  };
   return card;
 }
+
+/* 修改拍摄时间 */
+function toDateInput(v){
+  if(!v)return '';
+  const m=String(v).match(/(\d{4})[\/\-](\d{1,2})[\/\-](\d{1,2})/);
+  return m?m[1]+'-'+String(m[2]).padStart(2,'0')+'-'+String(m[3]).padStart(2,'0'):'';
+}
+function fromDateInput(v){
+  const m=String(v||'').match(/(\d{4})-(\d{1,2})-(\d{1,2})/);
+  return m?(Number(m[1])+'/'+Number(m[2])+'/'+Number(m[3])):(v||null);
+}
+async function saveShotTime(shotTime){
+  if(!currentShotId)return;
+  const res=await fetch('/api/update',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({id:currentShotId,shot_time:shotTime,token})});
+  const d=await res.json();
+  if(d.ok){showToast('拍摄时间已更新');loadPhotos();}
+  else showToast('保存失败：'+(d.msg||'未知错误'));
+}
+$('confirmShot').onclick=()=>{saveShotTime(fromDateInput($('shotDateInput').value));$('shotModal').classList.remove('show')};
+$('clearShot').onclick=()=>{saveShotTime(null);$('shotModal').classList.remove('show')};
+$('closeShot').onclick=()=>$('shotModal').classList.remove('show');
+$('shotModal').onclick=e=>{if(e.target===$('shotModal'))$('shotModal').classList.remove('show')};
 
 function refreshUI(){
   $('loginBtn').style.display=isAdmin?'none':'block';
@@ -610,6 +654,7 @@ function refreshUI(){
   $('manageAlbumsBtn').style.display=isAdmin?'block':'none';
   document.querySelectorAll('.del-btn').forEach(b=>b.style.display=isAdmin?'block':'none');
   document.querySelectorAll('.move-btn').forEach(b=>b.style.display=isAdmin?'block':'none');
+  document.querySelectorAll('.shot-edit-btn').forEach(b=>b.style.display=isAdmin?'inline':'none');
 }
 document.querySelector('.close-btn').onclick=()=>$('lightbox').classList.remove('show');
 $('lightbox').onclick=e=>{if(e.target===$('lightbox'))$('lightbox').classList.remove('show')};
