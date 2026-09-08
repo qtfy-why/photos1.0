@@ -10,14 +10,22 @@ cloudinary.config({
 
 export default async function handler(req,res){
   if(req.method!=='DELETE') return res.status(405).end();
-  const {id,token}=req.body;
+  const {id,ids,token}=req.body||{};
   if(!token) return res.status(401).json({ok:false});
-  const find=await pool.query('SELECT url FROM photos WHERE id=$1',[id]);
-  if(find.rows.length>0){
-    const url=find.rows[0].url;
-    const publicId=url.split('/').pop().split('.')[0];
-    await cloudinary.uploader.destroy(publicId);
+  const list=Array.isArray(ids)?ids:(id?[id]:[]);
+  if(!list.length) return res.status(400).json({ok:false,msg:'参数错误'});
+  try{
+    const nums=list.map(Number).filter(n=>!isNaN(n));
+    const find=await pool.query('SELECT url FROM photos WHERE id = ANY($1)',[nums]);
+    for(const row of find.rows){
+      try{
+        const publicId=row.url.split('/').pop().split('.')[0];
+        await cloudinary.uploader.destroy(publicId);
+      }catch(e){}
+    }
+    await pool.query('DELETE FROM photos WHERE id = ANY($1)',[nums]);
+    return res.json({ok:true});
+  }catch(e){
+    return res.status(500).json({ok:false,msg:e.message});
   }
-  await pool.query('DELETE FROM photos WHERE id=$1',[id]);
-  return res.json({ok:true});
 }

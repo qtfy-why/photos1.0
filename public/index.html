@@ -30,7 +30,7 @@ body{
   background-repeat:no-repeat;
   transition:background-color .5s ease;
 }
-#bgOverlay{position:fixed;inset:0;z-index:0;background:rgba(248,244,235,0);pointer-events:none;transition:opacity .5s ease}
+#bgOverlay{position:fixed;inset:0;z-index:0;background:rgba(248,244,235,1);pointer-events:none;transition:opacity .5s ease}
 header{position:relative;z-index:1;text-align:center;padding:54px 20px 18px}
 header h1{
   font-family:"Songti SC","SimSun","STSong","Noto Serif SC",serif;
@@ -98,11 +98,25 @@ header h1{
 .photo-info{padding:14px 16px}
 .photo-title{font-size:1.02rem;margin-bottom:5px;color:var(--text);word-break:break-all}
 .photo-time{font-size:.8rem;color:var(--muted);letter-spacing:1px}
+.photo-loc{font-size:.78rem;color:var(--muted);letter-spacing:1px;margin-top:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .album-tag{display:inline-block;font-size:.72rem;color:var(--accent-dark);background:var(--accent-soft);padding:2px 9px;border-radius:999px;margin-left:8px;vertical-align:middle}
 .del-btn{position:absolute;top:10px;right:10px;background:var(--danger);border:none;color:#fff;width:30px;height:30px;border-radius:50%;display:none;cursor:pointer;font-weight:bold;box-shadow:0 2px 6px rgba(0,0,0,.25)}
 .move-btn{position:absolute;top:10px;left:10px;background:var(--accent-dark);border:none;color:#fff;padding:6px 12px;border-radius:999px;display:none;cursor:pointer;font-size:.74rem;letter-spacing:1px;box-shadow:0 2px 6px rgba(0,0,0,.25)}
 .shot-edit-btn{display:none;border:none;background:none;color:var(--accent-dark);cursor:pointer;font-size:.8rem;margin-left:6px;padding:0 4px;vertical-align:middle}
 .shot-edit-btn:hover{color:var(--accent)}
+/* ===== 右上角头像 ===== */
+header{position:relative}
+.avatar-btn{position:absolute;top:16px;right:18px;width:42px;height:42px;border-radius:50%;overflow:hidden;border:2px solid var(--accent-dark);cursor:pointer;padding:0;background:#cfc7b6;z-index:5;box-shadow:0 2px 8px rgba(0,0,0,.2);transition:transform .2s}
+.avatar-btn:hover{transform:scale(1.06)}
+.avatar-btn img{width:100%;height:100%;object-fit:cover;display:block}
+.avatar-big{width:76px;height:76px;border-radius:50%;overflow:hidden;margin:4px auto 12px;border:3px solid var(--accent-soft);background:#cfc7b6}
+.avatar-big img{width:100%;height:100%;object-fit:cover;display:block}
+/* ===== 多选模式 ===== */
+.sel-check{position:absolute;top:10px;left:10px;width:24px;height:24px;border-radius:50%;border:2px solid #fff;background:rgba(0,0,0,.4);display:none;align-items:center;justify-content:center;color:#fff;font-size:.72rem;font-weight:bold;z-index:3;pointer-events:none}
+.photo-card.selected{border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-soft)}
+.sel-bar{position:fixed;left:0;right:0;bottom:0;background:rgba(243,238,227,.97);backdrop-filter:blur(6px);border-top:1px solid var(--border);padding:12px 16px;display:flex;align-items:center;gap:10px;z-index:60;box-shadow:0 -4px 18px rgba(74,60,38,.14)}
+.sel-bar .cnt{flex:1;font-size:.92rem;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.sel-bar .btn{padding:9px 14px;font-size:.84rem}
 /* ===== 照片排序面板 ===== */
 .sort-list{max-height:52vh;overflow-y:auto;margin:6px 0 4px}
 .sort-item{display:flex;align-items:center;gap:10px;padding:8px 10px;border:1px solid var(--border);border-radius:8px;background:#fff;margin-bottom:8px}
@@ -163,13 +177,13 @@ input[type=color]{width:100%;height:42px;border:none;border-radius:8px;cursor:po
   <h1>Perfect Photos</h1>
   <p class="desc">Per aspera ad astra</p>
   <p class="desc-sub">循此之旅，以达繁星</p>
+  <button class="avatar-btn" id="avatarBtn" title="账号"><img id="avatarImg" alt="头像"></button>
 </header>
 <div class="admin-bar">
-  <button class="btn btn-gear" id="settingsBtn">背景设置</button>
-  <button class="btn btn-login" id="loginBtn">管理员登录</button>
-  <button class="btn btn-logout" id="logoutBtn" style="display:none">退出登录</button>
+  <button class="btn btn-gear" id="settingsBtn" style="display:none">背景设置</button>
   <button class="btn btn-add" id="addPhotoBtn" style="display:none">上传图片</button>
   <button class="btn btn-gear" id="sortPhotosBtn" style="display:none">排序照片</button>
+  <button class="btn btn-gear" id="selectPhotosBtn" style="display:none">选择照片</button>
 </div>
 
 <div class="album-bar" id="albumBar">
@@ -191,16 +205,31 @@ input[type=color]{width:100%;height:42px;border:none;border-radius:8px;cursor:po
   </div>
 </div>
 
+<div class="modal" id="avatarModal">
+  <div class="box">
+    <h3>我的账号</h3>
+    <div class="avatar-big"><img id="avatarBigImg" alt="头像"></div>
+    <input type="file" id="avatarFile" accept="image/*">
+    <div class="set-note">选择图片可更换头像（仅保存在本浏览器）。</div>
+    <div class="row">
+      <button class="btn btn-logout" id="avatarLogout" style="display:none">退出登录</button>
+      <button class="btn" id="closeAvatar">关闭</button>
+    </div>
+  </div>
+</div>
+
 <div class="modal" id="uploadModal">
   <div class="box">
     <h3>上传照片</h3>
     <input type="file" id="imgFile" accept="image/*" multiple>
     <input type="text" id="photoTitle" placeholder="照片标题（多张时自动用文件名）">
+    <input type="date" id="upShotTime">
+    <input type="text" id="upShotLocation" placeholder="拍摄地点（多张时统一应用，可留空）">
     <select id="uploadAlbum">
       <option value="">未分类</option>
     </select>
     <div class="up-preview" id="uploadPreview"></div>
-    <div class="set-note">每张照片可单独填写拍摄时间；留空则自动读取照片内拍摄信息。</div>
+    <div class="set-note">拍摄时间：多张上传时对所有照片统一生效；留空则自动读取照片内拍摄信息。拍摄地点：多张统一生效。</div>
     <div class="row">
       <button class="btn btn-add" id="confirmUpload">上传</button>
       <button class="btn" id="closeUpload">取消</button>
@@ -238,9 +267,10 @@ input[type=color]{width:100%;height:42px;border:none;border-radius:8px;cursor:po
 
 <div class="modal" id="shotModal">
   <div class="box">
-    <h3>修改拍摄时间</h3>
+    <h3>修改拍摄信息</h3>
     <input type="date" id="shotDateInput">
-    <div class="set-note">照片无法自动识别拍摄时间时，可在这里手动填写或清除。</div>
+    <input type="text" id="shotLocInput" placeholder="拍摄地点（可留空）">
+    <div class="set-note">照片无法自动识别拍摄时间时，可在这里手动填写或清除；地点可一并修改。</div>
     <div class="row">
       <button class="btn btn-add" id="confirmShot">保存</button>
       <button class="btn btn-logout" id="clearShot">清除时间</button>
@@ -259,6 +289,13 @@ input[type=color]{width:100%;height:42px;border:none;border-radius:8px;cursor:po
       <button class="btn" id="closeSort">取消</button>
     </div>
   </div>
+</div>
+
+<div class="sel-bar" id="selBar" style="display:none">
+  <span class="cnt" id="selCount">已选 0 张</span>
+  <button class="btn btn-add" id="selMove">移动到相册</button>
+  <button class="btn btn-logout" id="selDelete">删除</button>
+  <button class="btn" id="selCancel">退出</button>
 </div>
 
 <div class="modal" id="settingsModal">
@@ -419,6 +456,9 @@ let movePhotoId=null;
 let currentShotId=null;
 let currentList=[];
 let lightIndex=0;
+let selectMode=false;
+let selected=new Set();
+let moveIds=null;
 
 async function loadAlbums(){
   try{
@@ -550,17 +590,20 @@ async function reorderAlbums(from,to){
 $('closeMove').onclick=()=>$('moveModal').classList.remove('show');
 $('moveModal').onclick=e=>{if(e.target===$('moveModal'))$('moveModal').classList.remove('show')};
 $('confirmMove').onclick=async()=>{
-  if(!movePhotoId)return;
+  if(!moveIds&&!movePhotoId)return;
   const albumId=$('moveAlbumSelect').value||null;
-  const res=await fetch('/api/move',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({id:movePhotoId,album_id:albumId,token})});
+  const body=moveIds?{ids:moveIds,album_id:albumId,token}:{id:movePhotoId,album_id:albumId,token};
+  const res=await fetch('/api/move',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});
   if(res.ok){
     $('moveModal').classList.remove('show');
-    showToast('已移动');loadPhotos();loadAlbums();
+    if(moveIds){showToast('已移动 '+moveIds.length+' 张');exitSelectMode();}
+    else showToast('已移动');
+    loadPhotos();loadAlbums();
   }else showToast('移动失败');
+  moveIds=null;
 };
 
 /* ===== 登录 / 登出 ===== */
-$('loginBtn').onclick=()=>$('loginModal').classList.add('show');
 $('closeLogin').onclick=()=>$('loginModal').classList.remove('show');
 $('closeUpload').onclick=()=>$('uploadModal').classList.remove('show');
 
@@ -572,23 +615,51 @@ $('confirmLogin').onclick=async()=>{
   else showToast('账号密码错误');
 }
 
-$('logoutBtn').onclick=async()=>{
-  await fetch('/api/logout',{method:'POST'});
-  localStorage.removeItem('token');token=null;isAdmin=false;refreshUI();loadPhotos();showToast('已退出')
+/* ===== 右上角头像 ===== */
+function defaultAvatar(){
+  const svg='<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64"><rect width="64" height="64" fill="#cfc7b6"/><circle cx="32" cy="25" r="13" fill="#f5efe1"/><path d="M13 57c4-11 10.5-16 19-16s15 5 19 16z" fill="#f5efe1"/></svg>';
+  return 'data:image/svg+xml;utf8,'+encodeURIComponent(svg);
 }
+function renderAvatar(){
+  const a=localStorage.getItem('avatar');
+  const src=a||defaultAvatar();
+  $('avatarImg').src=src;
+  $('avatarBigImg').src=src;
+}
+$('avatarBtn').onclick=()=>{
+  if(isAdmin){renderAvatar();$('avatarLogout').style.display='block';$('avatarModal').classList.add('show');}
+  else $('loginModal').classList.add('show');
+};
+$('closeAvatar').onclick=()=>$('avatarModal').classList.remove('show');
+$('avatarModal').onclick=e=>{if(e.target===$('avatarModal'))$('avatarModal').classList.remove('show')};
+$('avatarLogout').onclick=async()=>{
+  await fetch('/api/logout',{method:'POST'});
+  localStorage.removeItem('token');token=null;isAdmin=false;
+  $('avatarModal').classList.remove('show');
+  if(selectMode)exitSelectMode();
+  refreshUI();loadPhotos();showToast('已退出');
+};
+$('avatarFile').onchange=e=>{
+  const f=e.target.files[0];
+  if(!f)return;
+  compressImage(f,dataUrl=>{
+    localStorage.setItem('avatar',dataUrl);
+    renderAvatar();
+    showToast('头像已更新');
+  },256,.85);
+  e.target.value='';
+};
 
 $('addPhotoBtn').onclick=()=>{$('uploadAlbum').value=currentAlbum!=='all'&&currentAlbum!=='none'?currentAlbum:'';buildUploadPreview();$('uploadModal').classList.add('show')};
 $('imgFile').onchange=buildUploadPreview;
 
 function fileBaseName(name){return String(name||'').replace(/\.[^.]+$/,'')}
 
-/* 上传预览：每张可选拍摄时间 */
-let uploadShot=[];
+/* 上传预览 */
 function buildUploadPreview(){
   const files=$('imgFile').files;
   const box=$('uploadPreview');box.innerHTML='';
-  uploadShot=[];
-  if(!files||!files.length){box.innerHTML='<div class="set-note">选择图片后将在这里逐张设置拍摄时间</div>';return;}
+  if(!files||!files.length){box.innerHTML='<div class="set-note">选择图片后将在这里预览</div>';return;}
   for(let i=0;i<files.length;i++){
     const f=files[i];
     uploadShot.push('');
@@ -598,8 +669,6 @@ function buildUploadPreview(){
     const n1=document.createElement('div');n1.textContent=fileBaseName(f.name)||('照片'+(i+1));
     const n2=document.createElement('div');n2.className='t';n2.textContent=(f.size/1024/1024).toFixed(1)+' MB';
     nm.append(n1,n2);
-    const dt=document.createElement('input');dt.type='date';dt.className='up-date';dt.title='拍摄时间（留空自动识别）';
-    dt.onchange=()=>{uploadShot[i]=dt.value};
     const rm=document.createElement('button');rm.type='button';rm.className='mini-btn up-rm';rm.textContent='移除';
     rm.onclick=()=>{
       const dtf=new DataTransfer();
@@ -609,7 +678,7 @@ function buildUploadPreview(){
       $('imgFile').files=dtf.files;
       buildUploadPreview();
     };
-    row.append(img,nm,dt,rm);
+    row.append(img,nm,rm);
     box.appendChild(row);
   }
 }
@@ -620,20 +689,21 @@ $('confirmUpload').onclick=async()=>{
   const btn=$('confirmUpload');
   const typedTitle=$('photoTitle').value.trim();
   const albumId=$('uploadAlbum').value||null;
+  const shot=$('upShotTime').value?(fromDateInput($('upShotTime').value)||''):'';
+  const loc=$('upShotLocation').value.trim();
   const total=files.length;
   btn.disabled=true;
   let ok=0,fail=0;
   for(let i=0;i<total;i++){
     btn.textContent='上传中 '+(i+1)+'/'+total+'…';
     const title=total===1?typedTitle:(fileBaseName(files[i].name)||('照片'+(i+1)));
-    const shot=uploadShot[i]?(fromDateInput(uploadShot[i])||''):'';
     await new Promise(done=>{
       compressImage(files[i],async dataUrl=>{
         try{
           const res=await fetch('/api/upload',{
             method:'POST',
             headers:{'Content-Type':'application/json'},
-            body:JSON.stringify({image:dataUrl,title,album_id:albumId,shot_time:shot,token})
+            body:JSON.stringify({image:dataUrl,title,album_id:albumId,shot_time:shot,shot_location:loc,token})
           });
           const d=await res.json();
           if(d.ok)ok++;else fail++;
@@ -646,8 +716,9 @@ $('confirmUpload').onclick=async()=>{
   btn.textContent='确认上传';
   $('imgFile').value='';
   $('photoTitle').value='';
+  $('upShotTime').value='';
+  $('upShotLocation').value='';
   $('uploadPreview').innerHTML='';
-  uploadShot=[];
   if(ok>0){
     showToast('成功上传 '+ok+' 张'+(fail?('，失败 '+fail+' 张'):''));
     loadPhotos();loadAlbums();
@@ -671,6 +742,7 @@ async function loadPhotos(){
     const wrap=$('galleryWrap');wrap.innerHTML='';
     if(!list.length){wrap.innerHTML='<div class="empty">暂无照片</div>';return;}
     list.forEach(item=>wrap.appendChild(buildCard(item)));
+    if(selectMode)renderSelectCards();
   }catch(e){
     $('galleryWrap').innerHTML='<div class="empty">加载失败</div>';
   }
@@ -680,11 +752,14 @@ async function loadPhotos(){
 function buildCard(item){
   const card=document.createElement('div');
   card.className='photo-card';
+  card.dataset.id=item.id;
   const album=item.album_id?albums.find(a=>a.id===item.album_id):null;
   const tagHtml=album?'<span class="album-tag">'+escapeHtml(album.name)+'</span>':'';
   const timeText=item.shot_time?('拍摄于 '+item.shot_time):item.time;
-  card.innerHTML=`<button class="del-btn">×</button><button class="move-btn">移入相册</button><img src="${thumbUrl(item.url,600)}" alt="${escapeHtml(item.title)}" loading="lazy"><div class="photo-info"><div class="photo-title">${escapeHtml(item.title)}${tagHtml}</div><div class="photo-time">${escapeHtml(timeText)}<button class="shot-edit-btn" title="修改拍摄时间">✎</button></div></div>`;
+  const locHtml=item.shot_location?('<div class="photo-loc">'+escapeHtml(item.shot_location)+'</div>'):'';
+  card.innerHTML=`<button class="del-btn">×</button><button class="move-btn">移入相册</button><span class="sel-check"></span><img src="${thumbUrl(item.url,600)}" alt="${escapeHtml(item.title)}" loading="lazy"><div class="photo-info"><div class="photo-title">${escapeHtml(item.title)}${tagHtml}</div><div class="photo-time">${escapeHtml(timeText)}<button class="shot-edit-btn" title="修改拍摄时间">✎</button></div>${locHtml}</div>`;
   card.querySelector('img').onclick=()=>{
+    if(selectMode){toggleSelect(item.id,card);return;}
     lightIndex=currentList.findIndex(p=>p.id===item.id);
     if(lightIndex<0)lightIndex=0;
     openLightbox();
@@ -705,6 +780,7 @@ function buildCard(item){
     e.stopPropagation();
     currentShotId=item.id;
     $('shotDateInput').value=toDateInput(item.shot_time);
+    $('shotLocInput').value=item.shot_location||'';
     $('shotModal').classList.add('show');
   };
   return card;
@@ -720,15 +796,15 @@ function fromDateInput(v){
   const m=String(v||'').match(/(\d{4})-(\d{1,2})-(\d{1,2})/);
   return m?(Number(m[1])+'/'+Number(m[2])+'/'+Number(m[3])):(v||null);
 }
-async function saveShotTime(shotTime){
+async function saveShotInfo(shotTime,shotLocation){
   if(!currentShotId)return;
-  const res=await fetch('/api/update',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({id:currentShotId,shot_time:shotTime,token})});
+  const res=await fetch('/api/update',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({id:currentShotId,shot_time:shotTime,shot_location:shotLocation,token})});
   const d=await res.json();
-  if(d.ok){showToast('拍摄时间已更新');loadPhotos();}
+  if(d.ok){showToast('拍摄信息已更新');loadPhotos();}
   else showToast('保存失败：'+(d.msg||'未知错误'));
 }
-$('confirmShot').onclick=()=>{saveShotTime(fromDateInput($('shotDateInput').value));$('shotModal').classList.remove('show')};
-$('clearShot').onclick=()=>{saveShotTime(null);$('shotModal').classList.remove('show')};
+$('confirmShot').onclick=()=>{saveShotInfo(fromDateInput($('shotDateInput').value),$('shotLocInput').value.trim());$('shotModal').classList.remove('show')};
+$('clearShot').onclick=()=>{saveShotInfo(null,$('shotLocInput').value.trim());$('shotModal').classList.remove('show')};
 $('closeShot').onclick=()=>$('shotModal').classList.remove('show');
 $('shotModal').onclick=e=>{if(e.target===$('shotModal'))$('shotModal').classList.remove('show')};
 
@@ -796,6 +872,64 @@ $('saveSort').onclick=async()=>{
   else showToast('保存失败');
 };
 
+/* ===== 多选模式（批量删除 / 批量移动） ===== */
+$('selectPhotosBtn').onclick=()=>{if(selectMode)exitSelectMode();else enterSelectMode()};
+function enterSelectMode(){
+  selectMode=true;selected.clear();
+  $('selectPhotosBtn').textContent='取消选择';
+  $('selBar').style.display='flex';
+  $('selCount').textContent='已选 0 张';
+  renderSelectCards();
+}
+function exitSelectMode(){
+  selectMode=false;selected.clear();
+  $('selectPhotosBtn').textContent='选择照片';
+  $('selBar').style.display='none';
+  loadPhotos();
+}
+function toggleSelect(id,card){
+  if(selected.has(id)){
+    selected.delete(id);
+    card.classList.remove('selected');
+    card.querySelector('.sel-check').textContent='';
+  }else{
+    selected.add(id);
+    card.classList.add('selected');
+    card.querySelector('.sel-check').textContent='✓';
+  }
+  $('selCount').textContent='已选 '+selected.size+' 张';
+}
+function renderSelectCards(){
+  document.querySelectorAll('.photo-card').forEach(card=>{
+    const id=Number(card.dataset.id);
+    const chk=card.querySelector('.sel-check');
+    chk.style.display='flex';
+    card.querySelector('.del-btn').style.display='none';
+    card.querySelector('.move-btn').style.display='none';
+    card.querySelector('.shot-edit-btn').style.display='none';
+    if(selected.has(id)){card.classList.add('selected');chk.textContent='✓';}
+  });
+}
+$('selMove').onclick=()=>{
+  if(!selected.size)return showToast('请先选择照片');
+  moveIds=[...selected];
+  fillMoveAlbumSelect();
+  $('moveModal').classList.add('show');
+};
+$('selDelete').onclick=async()=>{
+  if(!selected.size)return showToast('请先选择照片');
+  const ids=[...selected];
+  if(!confirm('确定删除选中的 '+ids.length+' 张照片？'))return;
+  const res=await fetch('/api/delete',{method:'DELETE',headers:{'Content-Type':'application/json'},body:JSON.stringify({ids,token})});
+  const d=await res.json();
+  if(d.ok){
+    showToast('已删除 '+ids.length+' 张');
+    exitSelectMode();
+    loadAlbums();
+  }else showToast('删除失败');
+};
+$('selCancel').onclick=exitSelectMode;
+
 /* ===== 灯箱切换 ===== */
 function openLightbox(){
   const item=currentList[lightIndex];
@@ -816,15 +950,18 @@ document.addEventListener('keydown',e=>{
 });
 
 function refreshUI(){
-  $('loginBtn').style.display=isAdmin?'none':'block';
-  $('logoutBtn').style.display=isAdmin?'block':'none';
   $('addPhotoBtn').style.display=isAdmin?'block':'none';
   $('settingsBtn').style.display=isAdmin?'block':'none';
   $('manageAlbumsBtn').style.display=isAdmin?'block':'none';
   $('sortPhotosBtn').style.display=isAdmin?'block':'none';
-  document.querySelectorAll('.del-btn').forEach(b=>b.style.display=isAdmin?'block':'none');
-  document.querySelectorAll('.move-btn').forEach(b=>b.style.display=isAdmin?'block':'none');
-  document.querySelectorAll('.shot-edit-btn').forEach(b=>b.style.display=isAdmin?'inline':'none');
+  $('selectPhotosBtn').style.display=isAdmin?'block':'none';
+  if(!isAdmin&&selectMode)exitSelectMode();
+  document.querySelectorAll('.del-btn').forEach(b=>b.style.display=isAdmin&&!selectMode?'block':'none');
+  document.querySelectorAll('.move-btn').forEach(b=>b.style.display=isAdmin&&!selectMode?'block':'none');
+  document.querySelectorAll('.shot-edit-btn').forEach(b=>b.style.display=isAdmin&&!selectMode?'inline':'none');
+  if(selectMode){
+    document.querySelectorAll('.sel-check').forEach(c=>c.style.display='flex');
+  }
 }
 document.querySelector('.close-btn').onclick=()=>$('lightbox').classList.remove('show');
 $('lightbox').onclick=e=>{if(e.target===$('lightbox'))$('lightbox').classList.remove('show')};
@@ -832,6 +969,7 @@ $('lightbox').onclick=e=>{if(e.target===$('lightbox'))$('lightbox').classList.re
 /* ===== 初始化 ===== */
 renderSwatches();
 applyBg();
+renderAvatar();
 refreshUI();
 loadAlbums();
 loadPhotos();

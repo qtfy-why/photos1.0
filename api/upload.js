@@ -27,17 +27,18 @@ async function getShotTime(image){
 
 export default async function handler(req,res){
   if(req.method!=='POST') return res.status(405).end();
-  const {image,title,album_id,token,shot_time}=req.body;
+  const {image,title,album_id,token,shot_time,shot_location}=req.body;
   if(!token) return res.status(401).json({ok:false});
   try{
     const manualShot=(shot_time&&String(shot_time).trim())?String(shot_time).trim():null;
     const shot=manualShot||(await getShotTime(image));
+    const loc=shot_location&&String(shot_location).trim()?String(shot_location).trim():null;
     const upload=await cloudinary.uploader.upload(image);
     const url=upload.secure_url;
     const time=new Date().toLocaleDateString('zh-CN');
     const aid=album_id?Number(album_id):null;
-    await pool.query('INSERT INTO photos(title,url,time,shot_time,album_id) VALUES($1,$2,$3,$4,$5)',[title,url,time,shot,aid]);
-    return res.json({ok:true,photo:{title,url,time,shot_time:shot}});
+    await pool.query('INSERT INTO photos(title,url,time,shot_time,shot_location,album_id) VALUES($1,$2,$3,$4,$5,$6)',[title,url,time,shot,loc,aid]);
+    return res.json({ok:true,photo:{title,url,time,shot_time:shot,shot_location:loc}});
   }catch(e){
     return res.status(500).json({ok:false,msg:e.message});
   }
