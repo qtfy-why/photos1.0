@@ -77,8 +77,9 @@ header h1{
 .album-hint{font-size:.74rem;color:var(--muted);margin-top:6px;line-height:1.6}
 .gallery-container{max-width:1400px;margin:0 auto;padding:10px 20px 46px;columns:4 220px;gap:16px;position:relative;z-index:1}
 @media (max-width:640px){
-  .gallery-container{columns:2 110px;gap:10px;padding:8px 12px 40px}
-  .photo-card{margin-bottom:10px;border-radius:8px}
+  .gallery-container{columns:auto;display:flex;flex-wrap:wrap;gap:10px;padding:8px 12px 40px}
+  .photo-card{margin-bottom:0;width:calc(50% - 5px);border-radius:8px}
+  .photo-card img{aspect-ratio:4/3;object-fit:cover}
   .photo-info{padding:9px 10px}
   .photo-title{font-size:.88rem}
   .photo-time{font-size:.72rem}
@@ -114,6 +115,14 @@ header h1{
 .sort-mv{flex:0 0 auto;display:flex;gap:4px}
 .mini-btn{border:1px solid var(--border);background:#fff;color:var(--accent-dark);padding:4px 10px;border-radius:6px;cursor:pointer;font-size:.76rem}
 .mini-btn:hover{background:var(--accent-light)}
+/* ===== 上传预览 ===== */
+.up-preview{max-height:38vh;overflow-y:auto;margin:8px 0 4px}
+.up-row{display:flex;align-items:center;gap:8px;padding:7px 8px;border:1px solid var(--border);border-radius:8px;background:#fff;margin-bottom:7px}
+.up-row img{width:46px;height:46px;object-fit:cover;border-radius:6px;flex:0 0 auto}
+.up-row .nm{flex:1;min-width:0;font-size:.85rem;color:var(--text)}
+.up-row .t{font-size:.7rem;color:var(--muted)}
+.up-date{border:1px solid var(--border);border-radius:6px;padding:5px 8px;font-size:.8rem;color:var(--text);background:#fff;max-width:150px}
+.up-rm{flex:0 0 auto}
 /* ===== 灯箱 ===== */
 .lb-arrow{position:absolute;top:50%;transform:translateY(-50%);background:rgba(0,0,0,.35);border:none;color:#fff;font-size:32px;width:54px;height:74px;cursor:pointer;border-radius:10px;line-height:1;z-index:2;transition:background .2s}
 .lb-arrow:hover{background:rgba(0,0,0,.6)}
@@ -191,6 +200,8 @@ input[type=color]{width:100%;height:42px;border:none;border-radius:8px;cursor:po
     <select id="uploadAlbum">
       <option value="">未分类</option>
     </select>
+    <div class="up-preview" id="uploadPreview"></div>
+    <div class="set-note">每张照片可单独填写拍摄时间；留空则自动读取照片内拍摄信息。</div>
     <div class="row">
       <button class="btn btn-add" id="confirmUpload">上传</button>
       <button class="btn" id="closeUpload">取消</button>
@@ -567,9 +578,42 @@ $('logoutBtn').onclick=async()=>{
   localStorage.removeItem('token');token=null;isAdmin=false;refreshUI();loadPhotos();showToast('已退出')
 }
 
-$('addPhotoBtn').onclick=()=>{$('uploadAlbum').value=currentAlbum!=='all'&&currentAlbum!=='none'?currentAlbum:'';$('uploadModal').classList.add('show')};
+$('addPhotoBtn').onclick=()=>{$('uploadAlbum').value=currentAlbum!=='all'&&currentAlbum!=='none'?currentAlbum:'';buildUploadPreview();$('uploadModal').classList.add('show')};
+$('imgFile').onchange=buildUploadPreview;
 
 function fileBaseName(name){return String(name||'').replace(/\.[^.]+$/,'')}
+
+/* 上传预览：每张可选拍摄时间 */
+let uploadShot=[];
+function buildUploadPreview(){
+  const files=$('imgFile').files;
+  const box=$('uploadPreview');box.innerHTML='';
+  uploadShot=[];
+  if(!files||!files.length){box.innerHTML='<div class="set-note">选择图片后将在这里逐张设置拍摄时间</div>';return;}
+  for(let i=0;i<files.length;i++){
+    const f=files[i];
+    uploadShot.push('');
+    const row=document.createElement('div');row.className='up-row';
+    const img=document.createElement('img');img.src=URL.createObjectURL(f);img.alt='';
+    const nm=document.createElement('div');nm.className='nm';
+    const n1=document.createElement('div');n1.textContent=fileBaseName(f.name)||('照片'+(i+1));
+    const n2=document.createElement('div');n2.className='t';n2.textContent=(f.size/1024/1024).toFixed(1)+' MB';
+    nm.append(n1,n2);
+    const dt=document.createElement('input');dt.type='date';dt.className='up-date';dt.title='拍摄时间（留空自动识别）';
+    dt.onchange=()=>{uploadShot[i]=dt.value};
+    const rm=document.createElement('button');rm.type='button';rm.className='mini-btn up-rm';rm.textContent='移除';
+    rm.onclick=()=>{
+      const dtf=new DataTransfer();
+      const arr=[...files];
+      arr.splice(i,1);
+      arr.forEach(x=>dtf.items.add(x));
+      $('imgFile').files=dtf.files;
+      buildUploadPreview();
+    };
+    row.append(img,nm,dt,rm);
+    box.appendChild(row);
+  }
+}
 
 $('confirmUpload').onclick=async()=>{
   const files=$('imgFile').files;
@@ -583,13 +627,14 @@ $('confirmUpload').onclick=async()=>{
   for(let i=0;i<total;i++){
     btn.textContent='上传中 '+(i+1)+'/'+total+'…';
     const title=total===1?typedTitle:(fileBaseName(files[i].name)||('照片'+(i+1)));
+    const shot=uploadShot[i]?(fromDateInput(uploadShot[i])||''):'';
     await new Promise(done=>{
       compressImage(files[i],async dataUrl=>{
         try{
           const res=await fetch('/api/upload',{
             method:'POST',
             headers:{'Content-Type':'application/json'},
-            body:JSON.stringify({image:dataUrl,title,album_id:albumId,token})
+            body:JSON.stringify({image:dataUrl,title,album_id:albumId,shot_time:shot,token})
           });
           const d=await res.json();
           if(d.ok)ok++;else fail++;
@@ -602,6 +647,8 @@ $('confirmUpload').onclick=async()=>{
   btn.textContent='确认上传';
   $('imgFile').value='';
   $('photoTitle').value='';
+  $('uploadPreview').innerHTML='';
+  uploadShot=[];
   if(ok>0){
     showToast('成功上传 '+ok+' 张'+(fail?('，失败 '+fail+' 张'):''));
     loadPhotos();loadAlbums();

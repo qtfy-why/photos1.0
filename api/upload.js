@@ -27,10 +27,11 @@ async function getShotTime(image){
 
 export default async function handler(req,res){
   if(req.method!=='POST') return res.status(405).end();
-  const {image,title,album_id,token}=req.body;
+  const {image,title,album_id,token,shot_time}=req.body;
   if(!token) return res.status(401).json({ok:false});
   try{
-    const shot=await getShotTime(image);
+    const manualShot=(shot_time&&String(shot_time).trim())?String(shot_time).trim():null;
+    const shot=manualShot||(await getShotTime(image));
     const upload=await cloudinary.uploader.upload(image);
     const url=upload.secure_url;
     const time=new Date().toLocaleDateString('zh-CN');
