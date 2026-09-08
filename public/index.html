@@ -30,7 +30,7 @@ body{
   background-repeat:no-repeat;
   transition:background-color .5s ease;
 }
-#bgOverlay{position:fixed;inset:0;z-index:0;background:rgba(248,244,235,1);pointer-events:none;transition:opacity .5s ease}
+#bgOverlay{position:fixed;inset:0;z-index:0;background-size:cover;background-position:center;background-repeat:no-repeat;pointer-events:none;transition:opacity .5s ease}
 header{position:relative;z-index:1;text-align:center;padding:54px 20px 18px}
 header h1{
   font-family:"Songti SC","SimSun","STSong","Noto Serif SC",serif;
@@ -80,6 +80,9 @@ header h1{
   .gallery-container{columns:auto;display:flex;flex-wrap:wrap;gap:10px;padding:8px 12px 40px}
   .photo-card{margin-bottom:0;width:calc(50% - 5px);border-radius:8px}
   .photo-info{padding:9px 10px}
+  .sel-bar{padding:10px 10px;gap:6px}
+  .sel-bar .btn{padding:8px 9px;font-size:.74rem}
+  .sel-bar .cnt{font-size:.82rem}
   .photo-title{font-size:.88rem}
   .photo-time{font-size:.72rem}
   .album-tag{font-size:.66rem;margin-left:4px;padding:1px 7px}
@@ -267,10 +270,11 @@ input[type=color]{width:100%;height:42px;border:none;border-radius:8px;cursor:po
 
 <div class="modal" id="shotModal">
   <div class="box">
-    <h3>修改拍摄信息</h3>
+    <h3>编辑照片信息</h3>
+    <input type="text" id="shotTitleInput" placeholder="照片标题">
     <input type="date" id="shotDateInput">
     <input type="text" id="shotLocInput" placeholder="拍摄地点（可留空）">
-    <div class="set-note">照片无法自动识别拍摄时间时，可在这里手动填写或清除；地点可一并修改。</div>
+    <div class="set-note">可修改标题、拍摄时间、拍摄地点；时间无法自动识别时可手动填写或清除。</div>
     <div class="row">
       <button class="btn btn-add" id="confirmShot">保存</button>
       <button class="btn btn-logout" id="clearShot">清除时间</button>
@@ -293,6 +297,7 @@ input[type=color]{width:100%;height:42px;border:none;border-radius:8px;cursor:po
 
 <div class="sel-bar" id="selBar" style="display:none">
   <span class="cnt" id="selCount">已选 0 张</span>
+  <button class="btn" id="selAll">全选</button>
   <button class="btn btn-add" id="selMove">移动位置</button>
   <button class="btn btn-logout" id="selDelete">删除</button>
   <button class="btn" id="selCancel">退出</button>
@@ -340,9 +345,9 @@ input[type=color]{width:100%;height:42px;border:none;border-radius:8px;cursor:po
       <div class="set-note">支持 JPG / PNG，上传后自动压缩并保存在本浏览器中</div>
     </div>
     <div class="settings-section">
-      <h4>遮罩透明度（图片背景时）</h4>
-      <input type="range" class="overlay-slider" id="overlaySlider" min="0" max="85" value="30">
-      <div class="set-note" id="overlayVal">30%</div>
+      <h4>背景图片透明度</h4>
+      <input type="range" class="overlay-slider" id="overlaySlider" min="0" max="100" value="100">
+      <div class="set-note" id="overlayVal">100%</div>
     </div>
     <div class="row">
       <button class="btn btn-login" id="resetBgBtn">恢复默认</button>
@@ -374,24 +379,21 @@ function escapeHtml(s){return String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'
 /* ===== 背景自定义 ===== */
 const BG_KEY='perfectdays_bg';
 const SWATCHES=['#f3eee3','#efe6d3','#dde3df','#d9dfe8','#ead9c4','#b7c2a8','#c9b8a0'];
-const DEFAULT_BG={type:'color',color:'#f3eee3',img:'',overlay:30};
+const DEFAULT_BG={type:'color',color:'#f3eee3',img:'',overlay:100};
 let bgSettings;
 try{bgSettings=Object.assign({},DEFAULT_BG,JSON.parse(localStorage.getItem(BG_KEY)||'{}'))}catch(e){bgSettings=Object.assign({},DEFAULT_BG)}
 
 function applyBg(){
   const body=document.body;
   const overlay=$('bgOverlay');
-  body.style.backgroundColor='';
+  body.style.backgroundColor=bgSettings.color||'#f3eee3';
   body.style.backgroundImage='';
-  overlay.style.opacity=0;
-  if(bgSettings.type==='color'){
-    body.style.backgroundColor=bgSettings.color||'#f3eee3';
-  }else if(bgSettings.type==='preset'||bgSettings.type==='custom'){
-    if(bgSettings.img){
-      body.style.backgroundColor=(bgSettings.color||'#f3eee3');
-      body.style.backgroundImage='url('+bgSettings.img+')';
-      overlay.style.opacity=(bgSettings.overlay||0)/100;
-    }
+  if((bgSettings.type==='preset'||bgSettings.type==='custom')&&bgSettings.img){
+    overlay.style.backgroundImage='url('+bgSettings.img+')';
+    overlay.style.opacity=(bgSettings.overlay==null?100:bgSettings.overlay)/100;
+  }else{
+    overlay.style.backgroundImage='';
+    overlay.style.opacity=0;
   }
   syncSettingsUI();
 }
@@ -792,6 +794,7 @@ function buildCard(item){
   card.querySelector('.shot-edit-btn').onclick=e=>{
     e.stopPropagation();
     currentShotId=item.id;
+    $('shotTitleInput').value=item.title||'';
     $('shotDateInput').value=toDateInput(item.shot_time);
     $('shotLocInput').value=item.shot_location||'';
     $('shotModal').classList.add('show');
@@ -809,15 +812,15 @@ function fromDateInput(v){
   const m=String(v||'').match(/(\d{4})-(\d{1,2})-(\d{1,2})/);
   return m?(Number(m[1])+'/'+Number(m[2])+'/'+Number(m[3])):(v||null);
 }
-async function saveShotInfo(shotTime,shotLocation){
+async function saveShotInfo(title,shotTime,shotLocation){
   if(!currentShotId)return;
-  const res=await fetch('/api/update',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({id:currentShotId,shot_time:shotTime,shot_location:shotLocation,token})});
+  const res=await fetch('/api/update',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({id:currentShotId,title,shot_time:shotTime,shot_location:shotLocation,token})});
   const d=await res.json();
-  if(d.ok){showToast('拍摄信息已更新');loadPhotos();}
+  if(d.ok){showToast('照片信息已更新');loadPhotos();}
   else showToast('保存失败：'+(d.msg||'未知错误'));
 }
-$('confirmShot').onclick=()=>{saveShotInfo(fromDateInput($('shotDateInput').value),$('shotLocInput').value.trim());$('shotModal').classList.remove('show')};
-$('clearShot').onclick=()=>{saveShotInfo(null,$('shotLocInput').value.trim());$('shotModal').classList.remove('show')};
+$('confirmShot').onclick=()=>{saveShotInfo($('shotTitleInput').value.trim(),fromDateInput($('shotDateInput').value),$('shotLocInput').value.trim());$('shotModal').classList.remove('show')};
+$('clearShot').onclick=()=>{saveShotInfo($('shotTitleInput').value.trim(),null,$('shotLocInput').value.trim());$('shotModal').classList.remove('show')};
 $('closeShot').onclick=()=>$('shotModal').classList.remove('show');
 $('shotModal').onclick=e=>{if(e.target===$('shotModal'))$('shotModal').classList.remove('show')};
 
@@ -973,6 +976,23 @@ $('selDelete').onclick=async()=>{
   }else showToast('删除失败');
 };
 $('selCancel').onclick=exitSelectMode;
+$('selAll').onclick=()=>{
+  const allIds=currentList.map(p=>p.id);
+  const allSelected=allIds.length>0&&allIds.every(id=>selected.has(id));
+  if(allSelected){
+    selected.clear();
+  }else{
+    selected=new Set(allIds);
+  }
+  document.querySelectorAll('.photo-card').forEach(card=>{
+    const id=Number(card.dataset.id);
+    const chk=card.querySelector('.sel-check');
+    if(selected.has(id)){card.classList.add('selected');chk.textContent='✓';}
+    else{card.classList.remove('selected');chk.textContent='';}
+  });
+  $('selAll').textContent=selected.size===allIds.length&&allIds.length>0?'取消全选':'全选';
+  $('selCount').textContent='已选 '+selected.size+' 张';
+};
 
 /* ===== 灯箱切换 ===== */
 function openLightbox(){
