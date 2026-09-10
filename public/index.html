@@ -103,8 +103,12 @@ header h1{
 .photo-time{font-size:.8rem;color:var(--muted);letter-spacing:1px}
 .photo-loc{font-size:.78rem;color:var(--muted);letter-spacing:1px;margin-top:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .album-tag{display:inline-block;font-size:.72rem;color:var(--accent-dark);background:var(--accent-soft);padding:2px 9px;border-radius:999px;margin-left:8px;vertical-align:middle}
-.del-btn{position:absolute;top:10px;right:10px;background:var(--danger);border:none;color:#fff;width:30px;height:30px;border-radius:50%;display:none;cursor:pointer;font-weight:bold;box-shadow:0 2px 6px rgba(0,0,0,.25)}
-.move-btn{position:absolute;top:10px;left:10px;background:var(--accent-dark);border:none;color:#fff;padding:6px 12px;border-radius:999px;display:none;cursor:pointer;font-size:.74rem;letter-spacing:1px;box-shadow:0 2px 6px rgba(0,0,0,.25)}
+.photo-actions{display:none;gap:8px;padding:0 14px 13px}
+.photo-actions .move-btn,.photo-actions .del-btn{border:none;color:#fff;padding:7px 14px;border-radius:6px;cursor:pointer;font-size:.76rem;letter-spacing:1px;flex:1}
+.photo-actions .move-btn{background:var(--accent-dark)}
+.photo-actions .move-btn:hover{opacity:.88}
+.photo-actions .del-btn{background:var(--danger)}
+.photo-actions .del-btn:hover{opacity:.88}
 .shot-edit-btn{display:none;border:none;background:none;color:var(--accent-dark);cursor:pointer;font-size:.8rem;margin-left:6px;padding:0 4px;vertical-align:middle}
 .shot-edit-btn:hover{color:var(--accent)}
 /* ===== 右上角头像 ===== */
@@ -797,7 +801,7 @@ function buildCard(item){
   const tagHtml=album?'<span class="album-tag">'+escapeHtml(album.name)+'</span>':'';
   const timeText=item.shot_time?('拍摄于 '+item.shot_time):item.time;
   const locHtml=item.shot_location?('<div class="photo-loc">'+escapeHtml(item.shot_location)+'</div>'):'';
-  card.innerHTML=`<button class="del-btn">×</button><button class="move-btn">移入相册</button><span class="sel-check"></span><img src="${thumbUrl(item.url,600)}" alt="${escapeHtml(item.title)}" loading="lazy"><div class="photo-info"><div class="photo-title">${escapeHtml(item.title)}${tagHtml}</div><div class="photo-time">${escapeHtml(timeText)}<button class="shot-edit-btn" title="修改拍摄时间">✎</button></div>${locHtml}</div>`;
+  card.innerHTML=`<span class="sel-check"></span><img src="${thumbUrl(item.url,600)}" alt="${escapeHtml(item.title)}" loading="lazy"><div class="photo-info"><div class="photo-title">${escapeHtml(item.title)}${tagHtml}</div><div class="photo-time">${escapeHtml(timeText)}<button class="shot-edit-btn" title="修改拍摄信息">✎</button></div>${locHtml}</div><div class="photo-actions"><button class="move-btn">移入相册</button><button class="del-btn">删除</button></div>`;
   card.querySelector('img').onclick=()=>{
     if(selectMode){toggleSelect(item.id,card);return;}
     lightIndex=currentList.findIndex(p=>p.id===item.id);
@@ -945,8 +949,7 @@ function renderSelectCards(){
     const id=Number(card.dataset.id);
     const chk=card.querySelector('.sel-check');
     chk.style.display='flex';
-    card.querySelector('.del-btn').style.display='none';
-    card.querySelector('.move-btn').style.display='none';
+    card.querySelector('.photo-actions').style.display='none';
     card.querySelector('.shot-edit-btn').style.display='none';
     if(selected.has(id)){card.classList.add('selected');chk.textContent='✓';}
   });
@@ -1045,8 +1048,7 @@ function refreshUI(){
   $('sortPhotosBtn').style.display=isAdmin?'block':'none';
   $('selectPhotosBtn').style.display=isAdmin?'block':'none';
   if(!isAdmin&&selectMode)exitSelectMode();
-  document.querySelectorAll('.del-btn').forEach(b=>b.style.display=isAdmin&&!selectMode?'block':'none');
-  document.querySelectorAll('.move-btn').forEach(b=>b.style.display=isAdmin&&!selectMode?'block':'none');
+  document.querySelectorAll('.photo-actions').forEach(a=>a.style.display=isAdmin&&!selectMode?'flex':'none');
   document.querySelectorAll('.shot-edit-btn').forEach(b=>b.style.display=isAdmin&&!selectMode?'inline':'none');
   if(selectMode){
     document.querySelectorAll('.sel-check').forEach(c=>c.style.display='flex');
