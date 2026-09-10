@@ -217,7 +217,7 @@ input[type=color]{width:100%;height:42px;border:none;border-radius:8px;cursor:po
     <h3>我的账号</h3>
     <div class="avatar-big"><img id="avatarBigImg" alt="头像"></div>
     <input type="file" id="avatarFile" accept="image/*">
-    <div class="set-note">选择图片可更换头像（仅保存在本浏览器）。</div>
+    <div class="set-note">选择图片可更换头像，保存到服务器后任何设备打开都能看到。</div>
     <div class="row">
       <button class="btn btn-logout" id="avatarLogout" style="display:none">退出登录</button>
       <button class="btn" id="closeAvatar">关闭</button>
@@ -386,18 +386,27 @@ const SWATCHES=['#f3eee3','#efe6d3','#dde3df','#d9dfe8','#ead9c4','#b7c2a8','#c9
 const DEFAULT_BG={type:'color',color:'#f3eee3',img:'',overlay:100};
 let bgSettings;
 try{bgSettings=Object.assign({},DEFAULT_BG,JSON.parse(localStorage.getItem(BG_KEY)||'{}'))}catch(e){bgSettings=Object.assign({},DEFAULT_BG)}
+let avatar=null;
+try{avatar=localStorage.getItem('avatar')||null}catch(e){avatar=null}
 
-/* 从服务器读取全站背景设置（任何设备打开都生效） */
+/* 从服务器读取全站背景/头像设置（任何设备打开都生效） */
 async function initBg(){
   try{
     const res=await fetch('/api/settings');
     const server=await res.json();
     if(server&&typeof server==='object'){
-      bgSettings=Object.assign({},DEFAULT_BG,server);
-      localStorage.setItem(BG_KEY,JSON.stringify(bgSettings));
+      if(server.bg&&typeof server.bg==='object'){
+        bgSettings=Object.assign({},DEFAULT_BG,server.bg);
+        localStorage.setItem(BG_KEY,JSON.stringify(bgSettings));
+      }
+      if(server.avatar){
+        avatar=server.avatar;
+        localStorage.setItem('avatar',avatar);
+      }
     }
   }catch(e){}
   applyBg();
+  renderAvatar();
 }
 
 function applyBg(){
@@ -665,8 +674,7 @@ function defaultAvatar(){
   return 'data:image/svg+xml;utf8,'+encodeURIComponent(svg);
 }
 function renderAvatar(){
-  const a=localStorage.getItem('avatar');
-  const src=a||defaultAvatar();
+  const src=avatar||defaultAvatar();
   $('avatarImg').src=src;
   $('avatarBigImg').src=src;
 }
@@ -687,12 +695,28 @@ $('avatarFile').onchange=e=>{
   const f=e.target.files[0];
   if(!f)return;
   compressImage(f,dataUrl=>{
+    avatar=dataUrl;
     localStorage.setItem('avatar',dataUrl);
     renderAvatar();
     showToast('头像已更新');
+    syncAvatarToServer();
   },256,.85);
   e.target.value='';
 };
+
+/* 头像同步到服务器（全站生效） */
+async function syncAvatarToServer(){
+  if(!isAdmin)return;
+  try{
+    const res=await fetch('/api/settings',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({avatar,token})});
+    const d=await res.json();
+    if(d.ok&&d.avatar){
+      avatar=d.avatar;
+      localStorage.setItem('avatar',avatar);
+      renderAvatar();
+    }else showToast('头像同步失败');
+  }catch(e){}
+}
 
 $('addPhotoBtn').onclick=()=>{$('uploadAlbum').value=currentAlbum!=='all'&&currentAlbum!=='none'?currentAlbum:'';buildUploadPreview();$('uploadModal').classList.add('show')};
 $('imgFile').onchange=buildUploadPreview;

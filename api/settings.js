@@ -11,22 +11,38 @@ cloudinary.config({
 export default async function handler(req,res){
   try{
     if(req.method==='GET'){
-      const r=await pool.query("SELECT value FROM site_settings WHERE key='bg'");
-      if(r.rows[0])return res.json(JSON.parse(r.rows[0].value));
-      return res.json(null);
+      const r=await pool.query("SELECT key,value FROM site_settings WHERE key IN ('bg','avatar')");
+      const out={bg:null,avatar:null};
+      for(const row of r.rows){
+        if(row.key==='bg')out.bg=JSON.parse(row.value);
+        if(row.key==='avatar')out.avatar=JSON.parse(row.value).img||null;
+      }
+      return res.json(out);
     }
     if(req.method==='POST'){
-      const {bg,token}=req.body||{};
+      const {bg,avatar,token}=req.body||{};
       if(!token) return res.status(401).json({ok:false});
-      if(!bg||typeof bg!=='object') return res.status(400).json({ok:false,msg:'参数错误'});
-      let img=bg.img||'';
-      if(img.startsWith('data:image')){
-        const up=await cloudinary.uploader.upload(img,{folder:'bg'});
-        img=up.secure_url;
+      const out={};
+      if(bg&&typeof bg==='object'){
+        let img=bg.img||'';
+        if(img.startsWith('data:image')){
+          const up=await cloudinary.uploader.upload(img,{folder:'bg'});
+          img=up.secure_url;
+        }
+        const saved=Object.assign({},bg,{img});
+        await pool.query("INSERT INTO site_settings(key,value) VALUES('bg',$1) ON CONFLICT (key) DO UPDATE SET value=$1",[JSON.stringify(saved)]);
+        out.bg=saved;
       }
-      const saved=Object.assign({},bg,{img});
-      await pool.query("INSERT INTO site_settings(key,value) VALUES('bg',$1) ON CONFLICT (key) DO UPDATE SET value=$1",[JSON.stringify(saved)]);
-      return res.json({ok:true,bg:saved});
+      if(avatar!==undefined){
+        let av=String(avatar||'');
+        if(av.startsWith('data:image')){
+          const up=await cloudinary.uploader.upload(av,{folder:'avatar'});
+          av=up.secure_url;
+        }
+        await pool.query("INSERT INTO site_settings(key,value) VALUES('avatar',$1) ON CONFLICT (key) DO UPDATE SET value=$1",[JSON.stringify({img:av})]);
+        out.avatar=av;
+      }
+      return res.json(Object.assign({ok:true},out));
     }
     res.status(405).end();
   }catch(e){
