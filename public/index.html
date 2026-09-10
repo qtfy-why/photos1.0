@@ -383,6 +383,19 @@ const DEFAULT_BG={type:'color',color:'#f3eee3',img:'',overlay:100};
 let bgSettings;
 try{bgSettings=Object.assign({},DEFAULT_BG,JSON.parse(localStorage.getItem(BG_KEY)||'{}'))}catch(e){bgSettings=Object.assign({},DEFAULT_BG)}
 
+/* 从服务器读取全站背景设置（任何设备打开都生效） */
+async function initBg(){
+  try{
+    const res=await fetch('/api/settings');
+    const server=await res.json();
+    if(server&&typeof server==='object'){
+      bgSettings=Object.assign({},DEFAULT_BG,server);
+      localStorage.setItem(BG_KEY,JSON.stringify(bgSettings));
+    }
+  }catch(e){}
+  applyBg();
+}
+
 function applyBg(){
   const body=document.body;
   const overlay=$('bgOverlay');
@@ -397,7 +410,19 @@ function applyBg(){
   }
   syncSettingsUI();
 }
-function saveBg(){localStorage.setItem(BG_KEY,JSON.stringify(bgSettings));applyBg()}
+function saveBg(){localStorage.setItem(BG_KEY,JSON.stringify(bgSettings));applyBg();syncBgToServer()}
+async function syncBgToServer(){
+  if(!isAdmin)return;
+  try{
+    const res=await fetch('/api/settings',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({bg:bgSettings,token})});
+    const d=await res.json();
+    if(d.ok&&d.bg){
+      bgSettings=Object.assign({},bgSettings,d.bg);
+      localStorage.setItem(BG_KEY,JSON.stringify(bgSettings));
+      applyBg();
+    }
+  }catch(e){}
+}
 
 function syncSettingsUI(){
   document.querySelectorAll('.bg-option').forEach(o=>o.classList.toggle('active',o.dataset.bgtype===bgSettings.type));
@@ -1032,7 +1057,7 @@ $('lightbox').onclick=e=>{if(e.target===$('lightbox'))$('lightbox').classList.re
 
 /* ===== 初始化 ===== */
 renderSwatches();
-applyBg();
+initBg();
 renderAvatar();
 refreshUI();
 loadAlbums();

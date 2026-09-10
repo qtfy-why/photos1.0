@@ -48,6 +48,10 @@
       "dest": "/api/photo-sort.js"
     },
     {
+      "src": "/api/settings",
+      "dest": "/api/settings.js"
+    },
+    {
       "src": "/",
       "dest": "/public/index.html"
     }
